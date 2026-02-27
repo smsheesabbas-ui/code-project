@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     # AI Configuration
     GROQ_API_KEY: Optional[str] = None
     
+    # Email Configuration
+    RESEND_API_KEY: Optional[str] = None
+    EMAIL_FROM: str = "CashFlow AI <alerts@cashflow.ai>"
+    
     # Celery Configuration
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/0"

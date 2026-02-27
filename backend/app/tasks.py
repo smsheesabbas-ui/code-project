@@ -250,8 +250,14 @@ async def _check_user_alerts(user_id: str):
 
 async def _send_user_weekly_summary(user_id: str):
     """Send weekly summary to a specific user"""
-    # This is a placeholder - implement email sending in next steps
-    pass
+    from .notifications.service import notification_service
+    
+    try:
+        success = await notification_service.send_weekly_summary_to_user(user_id)
+        return success
+    except Exception as e:
+        print(f"Error sending weekly summary to user {user_id}: {e}")
+        return False
 
 
 # Helper functions for async operations
