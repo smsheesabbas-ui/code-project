@@ -7,13 +7,12 @@ from datetime import datetime
 from ..database import csv_imports, transactions, users
 from ..models.csv_import import CSVImportCreate, CSVImport, ImportStatus, ColumnMapping, ImportPreview
 from ..models.transaction import TransactionCreate, Transaction
-from .csv_processor import CSVProcessor
+from .simple_csv_processor import SimpleCSVProcessor
 from ..config import settings
-import pandas as pd
 
 class IngestionService:
     def __init__(self):
-        self.processor = CSVProcessor()
+        self.processor = SimpleCSVProcessor()
         self.upload_dir = settings.UPLOAD_DIR
         
         # Ensure upload directory exists
@@ -81,20 +80,20 @@ class IngestionService:
             )
             
             # Read CSV file
-            df = pd.read_csv(import_record["file_path"])
+            data = self.processor.read_csv(import_record["file_path"])
             
             # Detect columns
-            mapping, confidence = self.processor.detect_columns(df)
+            mapping, confidence = self.processor.detect_columns(data)
             
             # Generate preview
-            preview_rows = self.processor.generate_preview(df, mapping)
+            preview_rows = self.processor.generate_preview(data, mapping)
             
             # Update import record
             update_data = {
                 "status": ImportStatus.PREVIEW_READY,
                 "column_mapping": mapping.dict(),
                 "detection_confidence": confidence,
-                "total_rows": len(df),
+                "total_rows": len(data),
                 "updated_at": datetime.utcnow()
             }
             
@@ -138,9 +137,9 @@ class IngestionService:
             )
         
         # Read CSV and generate preview
-        df = pd.read_csv(import_record["file_path"])
+        data = self.processor.read_csv(import_record["file_path"])
         mapping = ColumnMapping(**import_record["column_mapping"])
-        preview_rows = self.processor.generate_preview(df, mapping)
+        preview_rows = self.processor.generate_preview(data, mapping)
         
         # Calculate validation summary
         valid_rows = len([r for r in preview_rows if not r.validation_errors])
@@ -200,9 +199,9 @@ class IngestionService:
             )
             
             # Read and normalize CSV
-            df = pd.read_csv(import_record["file_path"])
+            data = self.processor.read_csv(import_record["file_path"])
             mapping = ColumnMapping(**import_record["column_mapping"])
-            normalized_df = self.processor.normalize_dataframe(df, mapping)
+            normalized_data = self.processor.normalize_dataframe(data, mapping)
             
             # Process each row
             imported_count = 0
@@ -210,7 +209,7 @@ class IngestionService:
             skipped_errors = 0
             transaction_ids = []
             
-            for _, row in normalized_df.iterrows():
+            for row in normalized_data:
                 # Skip rows with validation errors
                 if not row.get('transaction_date') or row.get('amount') is None:
                     skipped_errors += 1

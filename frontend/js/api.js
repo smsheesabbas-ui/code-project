@@ -3,6 +3,9 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
   ? 'https://api.cashflow.ai/api/v1' 
   : 'http://localhost:8000/api/v1';
 
+// Fallback for development without /api/v1 prefix
+const FALLBACK_API_URL = 'http://localhost:8000';
+
 // API Client
 class ApiClient {
   constructor() {
@@ -44,6 +47,17 @@ class ApiClient {
 
       return await response.json();
     } catch (error) {
+      // Try fallback URL if main fails
+      if (this.baseURL === API_BASE_URL && !endpoint.startsWith('/auth')) {
+        console.log('Trying fallback API URL...');
+        const fallbackUrl = `${FALLBACK_API_URL}${endpoint}`;
+        const fallbackResponse = await fetch(fallbackUrl, config);
+        
+        if (fallbackResponse.ok) {
+          return await fallbackResponse.json();
+        }
+      }
+      
       console.error('API Error:', error);
       throw error;
     }

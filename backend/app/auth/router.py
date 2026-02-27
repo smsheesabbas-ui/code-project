@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
-from ..service import auth_service
+from .service import auth_service
 from ..models.user import UserCreate, User, UserLogin, Token
 from ..database import users
 from ..config import settings

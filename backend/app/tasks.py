@@ -5,11 +5,9 @@ from celery import current_task
 from .celery_app import celery_app
 from .database import csv_imports, transactions, entities, users
 from .ingestion.service import ingestion_service
-from .ai.groq_client import get_groq_client
 from .models.csv_import import ImportStatus
 from .models.transaction import Transaction
 from .config import settings
-import pandas as pd
 import uuid
 
 

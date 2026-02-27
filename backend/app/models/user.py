@@ -17,6 +17,14 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
 class UserOAuthCreate(UserBase):
     auth_provider: AuthProvider
     auth_provider_id: str
