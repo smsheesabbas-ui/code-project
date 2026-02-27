@@ -4,6 +4,7 @@ from .database import init_db
 from .auth.router import router as auth_router
 from .ingestion.router import router as ingestion_router
 from .dashboard.router import router as dashboard_router
+from .dashboard.advanced_router import router as advanced_dashboard_router
 from .entities.router import router as entities_router
 from .forecasting.router import router as forecasting_router
 from .insights.router import router as insights_router
@@ -31,6 +32,7 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(ingestion_router, prefix="/api/v1")
 app.include_router(dashboard_router, prefix="/api/v1")
+app.include_router(advanced_dashboard_router, prefix="/api/v1")
 app.include_router(entities_router, prefix="/api/v1")
 app.include_router(forecasting_router, prefix="/api/v1")
 app.include_router(insights_router, prefix="/api/v1")
