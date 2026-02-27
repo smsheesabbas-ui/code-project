@@ -1,0 +1,339 @@
+/* ========================================
+   CASHFLOW - TRANSACTIONS PAGE STYLES
+   ======================================== */
+
+.transactions-content {
+    padding: 28px 36px;
+    max-width: 1600px;
+}
+
+/* Filters Bar */
+.filters-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+}
+
+.search-box {
+    flex: 1;
+    min-width: 280px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-box svg {
+    position: absolute;
+    left: 14px;
+    color: var(--gray-400);
+    pointer-events: none;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 11px 16px 11px 44px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--gray-900);
+    background: white;
+    transition: all var(--transition-fast) ease;
+    font-family: inherit;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+}
+
+.search-box input::placeholder {
+    color: var(--gray-400);
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-select {
+    padding: 10px 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-700);
+    background: white;
+    cursor: pointer;
+    transition: all var(--transition-fast) ease;
+    font-family: inherit;
+    outline: none;
+}
+
+.filter-select:hover {
+    border-color: var(--primary-light);
+}
+
+.filter-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+}
+
+.filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 16px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-600);
+    background: white;
+    cursor: pointer;
+    transition: all var(--transition-fast) ease;
+    font-family: inherit;
+}
+
+.filter-btn:hover {
+    background: var(--primary-faint);
+    border-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+/* Transactions Card/Table */
+.card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 14px;
+    padding: 22px;
+}
+
+.transactions-table {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    border-bottom: 2px solid var(--gray-100);
+}
+
+th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--gray-400);
+}
+
+.transaction-row {
+    border-bottom: 1px solid var(--gray-100);
+    transition: background var(--transition-fast) ease;
+}
+
+.transaction-row:last-child {
+    border-bottom: none;
+}
+
+.transaction-row:hover {
+    background: var(--primary-faint);
+}
+
+td {
+    padding: 14px 16px;
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+.date {
+    color: var(--gray-500);
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.description {
+    min-width: 250px;
+}
+
+.desc-main {
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 3px;
+    font-size: 14px;
+}
+
+.desc-meta {
+    font-size: 12px;
+    color: var(--gray-400);
+}
+
+/* Category Badges */
+.category-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+}
+
+.category-badge.revenue {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.category-badge.software {
+    background: #ffedd5;
+    color: #c2410c;
+}
+
+.category-badge.marketing {
+    background: #fef9c3;
+    color: #a16207;
+}
+
+.category-badge.operations {
+    background: #f3e8ff;
+    color: #7e22ce;
+}
+
+/* Entity Badges */
+.entity-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    background: var(--gray-100);
+    color: var(--gray-600);
+}
+
+.entity-badge.customer {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.entity-badge.supplier {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* Amount Styling */
+.amount {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    font-size: 14px;
+}
+
+.transaction-row.positive .amount {
+    color: var(--green);
+}
+
+.transaction-row.negative .amount {
+    color: var(--error);
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 16px 0;
+    border-top: 1px solid var(--gray-100);
+    margin-top: 10px;
+}
+
+.pagination-btn {
+    padding: 8px 16px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-600);
+    background: white;
+    cursor: pointer;
+    transition: all var(--transition-fast) ease;
+    font-family: inherit;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: var(--primary-faint);
+    border-color: var(--primary-light);
+    color: var(--primary);
+}
+
+.pagination-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pagination-info {
+    font-size: 13px;
+    color: var(--gray-500);
+    font-weight: 500;
+}
+
+/* Text Alignment Utility */
+.text-right {
+    text-align: right;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .filters-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-box {
+        min-width: 100%;
+    }
+
+    .filter-group {
+        width: 100%;
+    }
+
+    .filter-select,
+    .filter-btn {
+        flex: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .transactions-content {
+        padding: 20px;
+    }
+
+    .transactions-table {
+        overflow-x: scroll;
+    }
+
+    table {
+        min-width: 760px;
+    }
+
+    .pagination {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pagination-btn {
+        width: 100%;
+        text-align: center;
+    }
+}
