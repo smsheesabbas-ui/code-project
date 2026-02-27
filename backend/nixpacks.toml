@@ -3,11 +3,11 @@ nixpkgs = ["https://nixpkgs.com/nixpkgs-unstable"]
 
 [phases.build]
 nixpkgs = ["https://nixpkgs.com/nixpkgs-unstable"]
-paths = ["."]
+paths = ["../."]
 
 [phases.install]
 nixpkgs = ["https://nixpkgs.com/nixpkgs-unstable"]
-paths = ["."]
+paths = ["../."]
 
 [start]
 cmd = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
