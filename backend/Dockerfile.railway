@@ -1,0 +1,32 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Expose port
+EXPOSE 8000
+
+# Railway environment variables
+ENV PORT=8000
+ENV MONGODB_URL=${MONGODB_URL}
+ENV REDIS_URL=${REDIS_URL}
+ENV CELERY_BROKER_URL=${CELERY_BROKER_URL}
+ENV CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+ENV SECRET_KEY=${SECRET_KEY}
+ENV GROQ_API_KEY=${GROQ_API_KEY}
+ENV RESEND_API_KEY=${RESEND_API_KEY}
+
+# Start command
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "$PORT"]
