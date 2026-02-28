@@ -1,0 +1,16 @@
+Date,Description,Amount,Balance,Type
+01/01/2024,Salary Deposit,2500.00,2500.00,Revenue
+01/02/2024,Grocery Store,-125.50,2374.50,Expense
+01/03/2024,Gas Station,-45.00,2329.50,Expense
+01/04/2024,Restaurant,-32.75,2296.75,Expense
+01/05/2024,Freelance Project,500.00,2796.75,Revenue
+01/06/2024,Electric Bill,-89.00,2707.75,Expense
+01/07/2024,Coffee Shop,4.50,2712.25,Expense
+01/08/2024,Online Course,-99.00,2613.25,Expense
+01/09/2024,Client Payment,1200.00,3813.25,Revenue
+01/10/2024,Internet Bill,-60.00,3753.25,Expense
+01/11/2024,Gym Membership,-40.00,3713.25,Expense
+01/12/2024,Lunch,-15.00,3698.25,Expense
+01/13/2024,Book Store,-25.00,3673.25,Expense
+01/14/2024,Consulting Fee,300.00,3973.25,Revenue
+01/15/2024,Rent Payment,-1200.00,2773.25,Expense

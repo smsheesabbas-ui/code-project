@@ -1,44 +1,55 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime
-from decimal import Decimal
+from bson import ObjectId
+from .user import PyObjectId, MongoBaseModel
 
-class TransactionBase(BaseModel):
+
+class Transaction(MongoBaseModel):
+    user_id: PyObjectId
     transaction_date: datetime
+    amount: float
     description: str
-    amount: Decimal
-    currency: str = "USD"
-    entity_id: Optional[str] = None
-    category_id: Optional[str] = None
-    tags: List[str] = []
+    normalized_description: str
+    balance: Optional[float] = None
+    entity_id: Optional[PyObjectId] = None
+    category: Optional[str] = None
+    tags: List[str] = Field(default_factory=list)
+    import_id: Optional[PyObjectId] = None
+    is_duplicate: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-class TransactionCreate(TransactionBase):
-    import_id: Optional[str] = None
+
+class TransactionCreate(BaseModel):
+    transaction_date: datetime
+    amount: float
+    description: str
+    balance: Optional[float] = None
+    category: Optional[str] = None
+    tags: List[str] = Field(default_factory=list)
+
 
 class TransactionUpdate(BaseModel):
     transaction_date: Optional[datetime] = None
+    amount: Optional[float] = None
     description: Optional[str] = None
-    amount: Optional[Decimal] = None
-    entity_id: Optional[str] = None
-    category_id: Optional[str] = None
+    balance: Optional[float] = None
+    category: Optional[str] = None
     tags: Optional[List[str]] = None
 
-class Transaction(TransactionBase):
+
+class TransactionResponse(BaseModel):
     id: str
     user_id: str
-    import_id: Optional[str] = None
-    import_timestamp: Optional[datetime] = None
-    source_file_reference: Optional[str] = None
-    is_duplicate: bool = False
+    transaction_date: datetime
+    amount: float
+    description: str
+    normalized_description: str
+    balance: Optional[float]
+    entity_id: Optional[str]
+    category: Optional[str]
+    tags: List[str]
+    import_id: Optional[str]
+    is_duplicate: bool
     created_at: datetime
-    updated_at: datetime
-
-class TransactionInDB(Transaction):
-    class Config:
-        from_attributes = True
-
-class TransactionList(BaseModel):
-    transactions: List[Transaction]
-    total: int
-    page: int
-    limit: int

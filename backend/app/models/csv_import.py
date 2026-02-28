@@ -1,63 +1,49 @@
-from pydantic import BaseModel
-from typing import Optional, Dict, Any, List
+from pydantic import BaseModel, Field, ConfigDict
+from typing import Optional, Dict, Any, List, Literal
 from datetime import datetime
-from enum import Enum
+from bson import ObjectId
+from .user import PyObjectId, MongoBaseModel
 
-class ImportStatus(str, Enum):
-    PENDING = "pending"
-    PROCESSING = "processing"
-    PREVIEW_READY = "preview_ready"
-    COMPLETED = "completed"
-    FAILED = "failed"
+
+class CSVImport(MongoBaseModel):
+    user_id: PyObjectId
+    filename: str
+    file_path: str
+    file_size: int
+    status: Literal["pending", "processing", "preview_ready", "confirmed", "failed"]
+    total_rows: int = 0
+    processed_rows: int = 0
+    duplicate_rows: int = 0
+    error_rows: int = 0
+    column_mapping: Optional[Dict[str, str]] = None
+    detected_columns: Optional[Dict[str, Any]] = None
+    preview_data: Optional[List[Dict[str, Any]]] = None
+    error_message: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
 
 class ColumnMapping(BaseModel):
-    date: Optional[str] = None
-    description: Optional[str] = None
-    amount: Optional[str] = None
-    debit: Optional[str] = None
-    credit: Optional[str] = None
-    balance: Optional[str] = None
+    date_column: Optional[str] = None
+    amount_column: Optional[str] = None
+    debit_column: Optional[str] = None
+    credit_column: Optional[str] = None
+    description_column: Optional[str] = None
+    balance_column: Optional[str] = None
 
-class CSVImportBase(BaseModel):
-    filename: str
-    file_size: int
 
-class CSVImportCreate(CSVImportBase):
-    pass
-
-class CSVImport(CSVImportBase):
+class CSVImportResponse(BaseModel):
     id: str
     user_id: str
-    status: ImportStatus
-    column_mapping: Optional[ColumnMapping] = None
-    detection_confidence: Optional[float] = None
-    total_rows: Optional[int] = None
-    processed_rows: Optional[int] = None
-    duplicate_rows: Optional[int] = None
-    error_rows: Optional[int] = None
-    file_path: Optional[str] = None
-    error_message: Optional[str] = None
-    created_at: datetime
-    updated_at: datetime
-
-class CSVImportInDB(CSVImport):
-    class Config:
-        from_attributes = True
-
-class PreviewRow(BaseModel):
-    row_number: int
-    date: Optional[str] = None
-    description: Optional[str] = None
-    amount: Optional[float] = None
-    balance: Optional[float] = None
-    is_duplicate: bool = False
-    validation_errors: List[str] = []
-
-class ImportPreview(BaseModel):
-    import_id: str
-    status: ImportStatus
-    column_mapping: ColumnMapping
-    detection_confidence: float
-    rows: List[PreviewRow]
+    filename: str
+    file_size: int
+    status: str
     total_rows: int
-    validation_summary: Dict[str, int]
+    processed_rows: int
+    duplicate_rows: int
+    error_rows: int
+    column_mapping: Optional[Dict[str, str]]
+    detected_columns: Optional[Dict[str, Any]]
+    preview_data: Optional[List[Dict[str, Any]]]
+    error_message: Optional[str]
+    created_at: datetime

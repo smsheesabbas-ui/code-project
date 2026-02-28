@@ -1,43 +1,52 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .database import init_db
-from .auth.router import router as auth_router
-from .ingestion.router import router as ingestion_router
-from .dashboard.router import router as dashboard_router
-from .config import settings
+from contextlib import asynccontextmanager
+import uvicorn
+
+from app.core.config import settings
+from app.core.database import connect_to_mongo, close_mongo_connection
+from app.api.v1.router import api_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await connect_to_mongo()
+    yield
+    await close_mongo_connection()
+
 
 app = FastAPI(
-    title="CashFlow AI API",
-    description="AI-powered cashflow management system",
-    version="1.0.0"
+    title=settings.APP_NAME,
+    description="AI-powered cashflow management backend",
+    version=settings.VERSION,
+    lifespan=lifespan
 )
 
-# CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(auth_router, prefix="/api/v1")
-app.include_router(ingestion_router, prefix="/api/v1")
-app.include_router(dashboard_router, prefix="/api/v1")
+app.include_router(api_router, prefix="/api/v1")
 
-@app.on_event("startup")
-async def startup_event():
-    await init_db()
 
 @app.get("/")
 async def root():
-    return {"message": "CashFlow AI API is running"}
+    return {"message": f"{settings.APP_NAME} Backend API", "status": "running", "version": settings.VERSION}
+
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "service": "cashflow-ai-backend"}
+
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=settings.DEBUG
+    )

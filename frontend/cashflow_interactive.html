@@ -2808,5 +2808,600 @@ function showToast(msg) {
 // ── BOOT ──────────────────────────────────────────────────────
 cashflowRouter.show('home');
 </script>
+
+<!-- Include API Integration -->
+<script src="js/api.js"></script>
+
+<script>
+// ========================================
+// CASHFLOW - AUTHENTICATION INTEGRATION
+// ========================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    initAuthentication();
+    initCSVUpload();
+    initDashboardData();
+});
+
+function initAuthentication() {
+    // Check if user is already authenticated
+    if (window.CashflowAPI.Auth.isAuthenticated()) {
+        showAuthenticatedUI();
+    } else {
+        showLoginUI();
+    }
+}
+
+function showLoginUI() {
+    // Add login modal or redirect to login page
+    const loginHTML = `
+        <div id="loginModal" class="modal-overlay" style="display: flex;">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h2>Welcome to CashFlow AI</h2>
+                    <p>Sign in to access your financial dashboard</p>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+                    </form>
+                    <div class="auth-divider">
+                        <span>or</span>
+                    </div>
+                    <button id="registerBtn" class="btn btn-outline btn-full">Create Account</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', loginHTML);
+    
+    // Handle login form submission
+    document.getElementById('loginForm').addEventListener('submit', handleLogin);
+    document.getElementById('registerBtn').addEventListener('click', showRegisterForm);
+}
+
+function showRegisterForm() {
+    const modal = document.getElementById('loginModal');
+    modal.innerHTML = `
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Create Account</h2>
+                <p>Start managing your finances today</p>
+            </div>
+            <div class="modal-body">
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="fullName">Full Name</label>
+                        <input type="text" id="fullName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Create Account</button>
+                </form>
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+                <button id="loginBtn" class="btn btn-outline btn-full">Back to Sign In</button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('registerForm').addEventListener('submit', handleRegister);
+    document.getElementById('loginBtn').addEventListener('click', showLoginUI);
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    try {
+        await window.CashflowAPI.Auth.login({ email, password });
+        document.getElementById('loginModal').remove();
+        showAuthenticatedUI();
+        loadDashboardData();
+    } catch (error) {
+        alert('Login failed: ' + error.message);
+    }
+}
+
+async function handleRegister(e) {
+    e.preventDefault();
+    const fullName = document.getElementById('fullName').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    try {
+        await window.CashflowAPI.Auth.register({ 
+            email, 
+            full_name: fullName, 
+            password 
+        });
+        // Auto-login after registration
+        await handleLogin(e);
+    } catch (error) {
+        alert('Registration failed: ' + error.message);
+    }
+}
+
+function showAuthenticatedUI() {
+    // Show user info and logout button
+    const user = window.CashflowAPI.Auth.getCurrentUserFromStorage();
+    const authHTML = `
+        <div class="auth-bar">
+            <span>Welcome, ${user.full_name}</span>
+            <button id="logoutBtn" class="btn btn-outline btn-sm">Logout</button>
+        </div>
+    `;
+    
+    // Add to header or sidebar
+    const header = document.querySelector('.page-header') || document.querySelector('header');
+    if (header) {
+        header.insertAdjacentHTML('beforeend', authHTML);
+        document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+    }
+}
+
+function handleLogout() {
+    window.CashflowAPI.Auth.logout();
+    location.reload();
+}
+
+// ========================================
+// CSV UPLOAD FUNCTIONALITY
+// ========================================
+
+function initCSVUpload() {
+    // Add CSV upload button to transactions page
+    const uploadBtn = document.querySelector('.btn-primary');
+    if (uploadBtn && uploadBtn.textContent.includes('Import')) {
+        uploadBtn.addEventListener('click', showCSVUploadModal);
+    }
+}
+
+function showCSVUploadModal() {
+    const uploadHTML = `
+        <div id="uploadModal" class="modal-overlay" style="display: flex;">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h2>Import CSV File</h2>
+                    <p>Upload your bank statement or transaction data</p>
+                </div>
+                <div class="modal-body">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-content">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17,8 12,3 7,8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <h3>Drop your CSV file here</h3>
+                            <p>or click to browse</p>
+                            <input type="file" id="csvFile" accept=".csv" style="display: none;">
+                            <button type="button" class="btn btn-outline" onclick="document.getElementById('csvFile').click()">
+                                Choose File
+                            </button>
+                        </div>
+                    </div>
+                    <div id="uploadProgress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <p>Processing your file...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeUploadModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', uploadHTML);
+    
+    // Setup file upload
+    const fileInput = document.getElementById('csvFile');
+    const uploadArea = document.getElementById('uploadArea');
+    
+    fileInput.addEventListener('change', handleFileSelect);
+    
+    // Drag and drop
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('drag-over');
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('drag-over');
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileUpload(files[0]);
+        }
+    });
+}
+
+async function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) {
+        await handleFileUpload(file);
+    }
+}
+
+async function handleFileUpload(file) {
+    if (!file.name.endsWith('.csv')) {
+        alert('Please select a CSV file');
+        return;
+    }
+    
+    document.getElementById('uploadArea').style.display = 'none';
+    document.getElementById('uploadProgress').style.display = 'block';
+    
+    try {
+        const result = await window.CashflowAPI.Import.uploadCSV(file);
+        
+        // Show preview and confirmation
+        await showImportPreview(result.id);
+        
+    } catch (error) {
+        alert('Upload failed: ' + error.message);
+        closeUploadModal();
+    }
+}
+
+async function showImportPreview(importId) {
+    try {
+        const preview = await window.CashflowAPI.Import.getImportPreview(importId);
+        
+        const previewHTML = `
+            <div id="previewModal" class="modal-overlay" style="display: flex;">
+                <div class="modal-card large">
+                    <div class="modal-header">
+                        <h2>Import Preview</h2>
+                        <p>Review detected columns and confirm import</p>
+                    </div>
+                    <div class="modal-body">
+                        <div class="import-summary">
+                            <p><strong>File:</strong> ${preview.filename}</p>
+                            <p><strong>Rows detected:</strong> ${preview.total_rows}</p>
+                            <p><strong>Confidence:</strong> ${Math.round((preview.detected_columns?.detection_confidence || 0) * 100)}%</p>
+                        </div>
+                        
+                        <div class="detected-columns">
+                            <h3>Detected Columns</h3>
+                            ${preview.detected_columns?.columns ? Object.entries(preview.detected_columns.columns).map(([key, col]) => 
+                                `<div class="column-detection">
+                                    <strong>${key}:</strong> ${col.source_column} (confidence: ${Math.round(col.confidence * 100)}%)
+                                </div>`
+                            ).join('') : 'No columns detected'}
+                        </div>
+                        
+                        <div class="preview-data">
+                            <h3>Sample Data</h3>
+                            <table class="preview-table">
+                                <thead>
+                                    <tr>
+                                        ${preview.preview_data?.[0] ? Object.keys(preview.preview_data[0]).map(key => 
+                                            `<th>${key}</th>`
+                                        ).join('') : ''}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${preview.preview_data?.slice(0, 5).map(row => 
+                                        `<tr>${Object.values(row).map(value => 
+                                            `<td>${value}</td>`
+                                        ).join('')}</tr>`
+                                    ).join('') || ''}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline" onclick="closeUploadModal()">Cancel</button>
+                        <button class="btn btn-primary" onclick="confirmImport('${importId}')">Import Data</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('uploadModal').remove();
+        document.body.insertAdjacentHTML('beforeend', previewHTML);
+        
+    } catch (error) {
+        alert('Failed to get preview: ' + error.message);
+        closeUploadModal();
+    }
+}
+
+async function confirmImport(importId) {
+    try {
+        const result = await window.CashflowAPI.Import.confirmImport(importId);
+        alert(`Successfully imported ${result.processed_rows} transactions!`);
+        closeUploadModal();
+        loadDashboardData(); // Refresh dashboard
+    } catch (error) {
+        alert('Import failed: ' + error.message);
+    }
+}
+
+function closeUploadModal() {
+    const modal = document.getElementById('uploadModal') || document.getElementById('previewModal');
+    if (modal) modal.remove();
+}
+
+// ========================================
+// DASHBOARD DATA LOADING
+// ========================================
+
+async function initDashboardData() {
+    if (window.CashflowAPI.Auth.isAuthenticated()) {
+        await loadDashboardData();
+    }
+}
+
+async function loadDashboardData() {
+    try {
+        const overview = await window.CashflowAPI.Dashboard.getOverview();
+        updateDashboardUI(overview);
+    } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+    }
+}
+
+function updateDashboardUI(data) {
+    // Update KPI cards
+    const kpiCards = document.querySelectorAll('.kpi-card .value');
+    if (kpiCards.length >= 4) {
+        kpiCards[0].textContent = window.CashflowAPI.formatCurrency(data.current_cash_balance || 0);
+        kpiCards[1].textContent = window.CashflowAPI.formatCurrency(data.total_revenue_this_month || 0);
+        kpiCards[2].textContent = window.CashflowAPI.formatCurrency(Math.abs(data.total_expenses_this_month || 0));
+        kpiCards[3].textContent = window.CashflowAPI.formatCurrency(data.net_income_this_month || 0);
+    }
+    
+    // Update transactions list
+    loadTransactions();
+}
+
+async function loadTransactions() {
+    try {
+        const data = await window.CashflowAPI.Transaction.getTransactions(1, 10);
+        updateTransactionsList(data.transactions);
+    } catch (error) {
+        console.error('Failed to load transactions:', error);
+    }
+}
+
+function updateTransactionsList(transactions) {
+    const tbody = document.querySelector('.transactions-table tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = transactions.map(transaction => `
+        <tr class="transaction-row ${transaction.amount >= 0 ? 'positive' : 'negative'}">
+            <td class="date">${window.CashflowAPI.formatDate(transaction.transaction_date)}</td>
+            <td class="description">
+                <div class="desc-main">${transaction.description}</div>
+                <div class="desc-meta">${transaction.category || 'Uncategorized'}</div>
+            </td>
+            <td><span class="category-badge">${transaction.category || 'Other'}</span></td>
+            <td><span class="entity-badge">${transaction.entity_name || 'Unknown'}</span></td>
+            <td class="text-right ${transaction.amount >= 0 ? 'positive' : 'negative'}">
+                ${window.CashflowAPI.formatCurrency(transaction.amount)}
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Add modal styles
+const modalStyles = `
+<style>
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-card {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-card.large {
+    max-width: 800px;
+}
+
+.modal-header h2 {
+    margin: 0 0 8px 0;
+    color: var(--gray-900);
+}
+
+.modal-header p {
+    margin: 0 0 24px 0;
+    color: var(--gray-600);
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 500;
+    color: var(--gray-700);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.auth-divider {
+    text-align: center;
+    margin: 24px 0;
+    position: relative;
+}
+
+.auth-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--gray-300);
+}
+
+.auth-divider span {
+    background: white;
+    padding: 0 16px;
+    color: var(--gray-500);
+    font-size: 14px;
+}
+
+.upload-area {
+    border: 2px dashed var(--gray-300);
+    border-radius: 12px;
+    padding: 48px 24px;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+
+.upload-area.drag-over {
+    border-color: var(--primary);
+    background: var(--primary-faint);
+}
+
+.upload-content svg {
+    color: var(--gray-400);
+    margin-bottom: 16px;
+}
+
+.upload-content h3 {
+    margin: 0 0 8px 0;
+    color: var(--gray-900);
+}
+
+.upload-content p {
+    margin: 0 0 24px 0;
+    color: var(--gray-600);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--gray-200);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary);
+    width: 0%;
+    animation: progress 2s ease-in-out infinite;
+}
+
+@keyframes progress {
+    0% { width: 0%; }
+    50% { width: 60%; }
+    100% { width: 0%; }
+}
+
+.auth-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background: var(--gray-50);
+    border-radius: 8px;
+    margin-top: 16px;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 14px;
+}
+
+.import-summary {
+    background: var(--gray-50);
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.import-summary p {
+    margin: 4px 0;
+}
+
+.detected-columns {
+    margin-bottom: 24px;
+}
+
+.column-detection {
+    padding: 8px 12px;
+    background: var(--green-faint);
+    border-radius: 6px;
+    margin: 4px 0;
+    font-size: 14px;
+}
+
+.preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.preview-table th,
+.preview-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.preview-table th {
+    background: var(--gray-50);
+    font-weight: 600;
+}
+</style>
+`;
+
+document.head.insertAdjacentHTML('beforeend', modalStyles);
+</script>
 </body>
 </html>
