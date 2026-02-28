@@ -302,28 +302,33 @@ body:not(.homepage) .sidebar:not(:hover) .nav-section-title {
     transition: all var(--transition-fast) ease;
     margin-bottom: 3px;
     white-space: nowrap;
+    position: relative;
 }
 
 .nav-item:hover {
     background: var(--primary-faint);
     color: var(--primary-dark);
+    transform: translateX(2px);
 }
 
 .nav-item.active {
     background: var(--primary);
     color: white;
     box-shadow: 0 2px 8px rgba(249, 115, 22, 0.35);
+    transform: translateX(0);
 }
 
 .nav-item.active:hover {
     background: var(--primary-dark);
     color: white;
+    transform: translateX(2px);
 }
 
 .nav-icon {
     width: 20px;
     height: 20px;
     flex-shrink: 0;
+    transition: transform var(--transition-fast) ease;
 }
 
 .nav-text {
@@ -346,6 +351,13 @@ body:not(.homepage) .sidebar:not(:hover) .nav-item {
     width: 44px;
     margin-left: auto;
     margin-right: auto;
+    gap: 0;
+}
+
+/* Fix icon alignment when collapsed */
+body:not(.homepage) .sidebar:not(:hover) .nav-item .nav-icon {
+    transform: none;
+    margin: 0;
 }
 
 /* Sidebar Footer */

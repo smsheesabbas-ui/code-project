@@ -436,6 +436,8 @@
                 
                 // Store data
                 insightsData.summary = summary;
+                insightsData.period_end = summary.period_end;
+                insightsData.data = summary.data;
                 insightsData.recommendations = recommendations.recommendations || [];
                 insightsData.forecast = forecast;
                 insightsData.alerts = alerts.alerts || [];
@@ -445,7 +447,7 @@
                 
             } catch (error) {
                 console.error('Error loading insights:', error);
-                // Show demo data instead of error
+                // Show demo data with Gemini branding
                 showDemoInsights();
             }
         }
@@ -459,7 +461,7 @@
                     <div class="insight-card">
                         <h3>📊 Weekly AI Summary</h3>
                         <div class="summary-text">
-                            <p><strong>Demo Mode:</strong> AI insights require GROQ_API_KEY for full functionality.</p>
+                            <p><strong>Demo Mode:</strong> AI insights require GEMINI_API_KEY for full functionality.</p>
                             <p>Based on your recent transactions, you've maintained healthy cash flow with consistent revenue streams. Consider monitoring upcoming expenses in the Software & Subscriptions category.</p>
                         </div>
                         <small>Generated: ${new Date().toLocaleDateString()}</small>
@@ -562,7 +564,7 @@
                 </div>
                 
                 <div class="demo-notice">
-                    <p><strong>Demo Mode:</strong> Set <code>GROQ_API_KEY</code> in environment variables to enable full AI-powered insights and personalized recommendations.</p>
+                    <p><strong>Demo Mode:</strong> Set <code>GEMINI_API_KEY</code> in environment variables to enable full AI-powered insights and personalized recommendations.</p>
                 </div>
             `;
             
@@ -577,10 +579,12 @@
             // Weekly Summary
             if (insightsData.summary) {
                 html += `
-                    <div class="summary-text">
-                        <h3>📊 Weekly AI Summary</h3>
-                        <p>${insightsData.summary.summary || 'No summary available'}</p>
-                        <small>Generated: ${new Date(insightsData.summary.period_end).toLocaleDateString()}</small>
+                    <div class="insight-card">
+                        <h3>📊 Google Gemini AI Summary</h3>
+                        <div class="summary-text">
+                            <p>${insightsData.summary}</p>
+                            <small>Generated: ${new Date(insightsData.period_end).toLocaleDateString()}</small>
+                        </div>
                     </div>
                 `;
             }
