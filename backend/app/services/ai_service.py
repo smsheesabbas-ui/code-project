@@ -14,7 +14,33 @@ class AIService:
         else:
             # Configure Gemini with the API key
             genai.configure(api_key=settings.GROQ_API_KEY)
-            self.client = genai.GenerativeModel('gemini-1.0-pro')
+            
+            # List available models to debug
+            try:
+                models = genai.list_models()
+                print("Available models:")
+                for model in models:
+                    print(f"  - {model.name}: {model.display_name}")
+            except Exception as e:
+                print(f"Error listing models: {e}")
+            
+            # Try to use the first available model that supports generateContent
+            try:
+                self.client = genai.GenerativeModel('gemini-2.5-flash')
+                print("Using model: gemini-2.5-flash")
+            except Exception as e:
+                print(f"Error with gemini-2.5-flash: {e}")
+                try:
+                    self.client = genai.GenerativeModel('gemini-pro-latest')
+                    print("Using model: gemini-pro-latest")
+                except Exception as e2:
+                    print(f"Error with gemini-pro-latest: {e2}")
+                    try:
+                        self.client = genai.GenerativeModel('gemini-flash-latest')
+                        print("Using model: gemini-flash-latest")
+                    except Exception as e3:
+                        print(f"Error with gemini-flash-latest: {e3}")
+                        self.client = None
     
     async def extract_entity(self, description: str) -> Optional[str]:
         """Extract entity name from transaction description"""

@@ -98,10 +98,16 @@ class ForecastingService:
         
         if isinstance(first_date, str):
             first_date = datetime.fromisoformat(first_date.replace('Z', '+00:00'))
+        elif hasattr(first_date, 'date'):
+            first_date = first_date.date()
         if isinstance(last_date, str):
             last_date = datetime.fromisoformat(last_date.replace('Z', '+00:00'))
+        elif hasattr(last_date, 'date'):
+            last_date = last_date.date()
         
-        return (last_date - first_date).days
+        if hasattr(first_date, 'day') and hasattr(last_date, 'day'):
+            return (last_date - first_date).days
+        return 0
     
     def _prepare_prophet_data(self, transactions: List[Dict]) -> pd.DataFrame:
         """Prepare transaction data for Prophet"""

@@ -41,7 +41,13 @@ async def get_weekly_summary():
         ]
         
         result = await db.transactions.aggregate(pipeline).to_list(length=1)
-        weekly_data = result[0] if result else {}
+        weekly_data = result[0] if result else {
+            "total_revenue": 0,
+            "total_expenses": 0,
+            "transaction_count": 0,
+            "top_customer": None,
+            "top_expense_category": None
+        }
         
         # Generate AI summary
         try:
@@ -67,10 +73,14 @@ async def get_weekly_summary():
         }
         
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate weekly summary: {str(e)}"
-        )
+        print(f"Error in weekly summary: {e}")
+        return {
+            "summary": f"Error generating summary: {str(e)}",
+            "data": {"total_revenue": 0, "total_expenses": 0, "transaction_count": 0},
+            "period_start": (datetime.utcnow() - timedelta(days=7)).isoformat(),
+            "period_end": datetime.utcnow().isoformat(),
+            "error": True
+        }
 
 
 @router.get("/recommendations")
@@ -97,7 +107,11 @@ async def get_recommendations():
         ]
         
         result = await db.transactions.aggregate(pipeline).to_list(length=1)
-        user_data = result[0] if result else {}
+        user_data = result[0] if result else {
+            "total_revenue": 0,
+            "total_expenses": 0,
+            "transaction_count": 0
+        }
         
         # Add top expense category
         expense_pipeline = [
@@ -139,7 +153,11 @@ async def get_recommendations():
             user_data["customer_concentration"] = revenue_result[0]["total_revenue"] / user_data["total_revenue"]
         
         # Generate recommendations
-        recommendations = await ai_service.generate_recommendations(user_data)
+        try:
+            recommendations = await ai_service.generate_recommendations(user_data)
+        except Exception as e:
+            print(f"AI Service Error: {e}")
+            recommendations = None
         
         return {
             "recommendations": recommendations or [
@@ -152,10 +170,13 @@ async def get_recommendations():
         }
         
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate recommendations: {str(e)}"
-        )
+        print(f"Error in recommendations: {e}")
+        return {
+            "recommendations": [f"Error generating recommendations: {str(e)}"],
+            "data": {"total_revenue": 0, "total_expenses": 0, "transaction_count": 0},
+            "generated_at": datetime.utcnow().isoformat(),
+            "error": True
+        }
 
 
 @router.get("/forecasts/cashflow")
@@ -189,7 +210,11 @@ async def get_alerts(limit: int = 50):
                 detail="Limit must be between 1 and 100"
             )
         
-        alerts = await alert_service.get_user_alerts(DEMO_USER_ID, limit)
+        try:
+            alerts = await alert_service.get_user_alerts(DEMO_USER_ID, limit)
+        except Exception as e:
+            print(f"Alert Service Error: {e}")
+            alerts = []
         
         return {
             "alerts": alerts,
@@ -197,10 +222,12 @@ async def get_alerts(limit: int = 50):
         }
         
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get alerts: {str(e)}"
-        )
+        print(f"Error in alerts: {e}")
+        return {
+            "alerts": [{"type": "error", "message": f"Error generating alerts: {str(e)}"}],
+            "count": 1,
+            "error": True
+        }
 
 
 @router.post("/alerts/check")
