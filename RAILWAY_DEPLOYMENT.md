@@ -1,111 +1,101 @@
-# Railway Deployment Guide
+# CashFlow AI Railway Deployment Guide
 
-## Issues Fixed
+## 🚀 Quick Deploy to Railway (New Project)
 
-Your Railway deployment was failing due to these issues:
+### Prerequisites
+- Railway account (https://railway.app)
+- GitHub account
 
-1. **Missing Database Services** - Railway needs MongoDB and Redis services added
-2. **Incorrect Environment Variables** - Localhost URLs don't work in Railway
-3. **Missing CORS Configuration** - Railway domains weren't allowed
-4. **Build Configuration** - NIXPACKS builder wasn't optimal for your setup
+### Step 1: Create New Railway Project
+1. Go to https://railway.app
+2. Click "New Project" → "Deploy from GitHub repo"
+3. Select your repository (or create new one)
+4. Choose "New Project" (don't update existing)
 
-## Files Created/Modified
+### Step 2: Configure Backend Service
+1. Click "Add Service" → "GitHub Repo"
+2. Select your repository
+3. Set root directory: `/backend`
+4. Railway will detect `railway.toml` and `Dockerfile`
+5. Click "Deploy"
 
-### 1. Updated `railway.toml`
-- Changed to DOCKERFILE builder
-- Added Railway service definitions
-- Added environment variable placeholders
+### Step 3: Configure Frontend Service
+1. Click "Add Service" → "GitHub Repo"
+2. Select same repository
+3. Set root directory: `/frontend`
+4. Railway will detect `railway.toml` and `package.json`
+5. Click "Deploy"
 
-### 2. Created `backend/Dockerfile.railway`
-- Railway-optimized Docker configuration
-- Health checks included
-- Uses Railway-specific requirements
+### Step 4: Set Environment Variables
+For Backend Service:
+- `GEMINI_API_KEY`: Your Google Gemini API key
+- `SECRET_KEY`: Generate random secret (use: openssl rand -hex 32)
+- `MONGODB_URL`: Railway MongoDB addon URL
+- `REDIS_URL`: Railway Redis addon URL
 
-### 3. Created `backend/requirements-railway.txt`
-- Streamlined dependencies for Railway
-- Removed unnecessary testing packages
+### Step 5: Add Database Addons
+1. Click "Add Service" → "MongoDB"
+2. Click "Add Service" → "Redis"
+3. Railway will automatically connect them
 
-### 4. Updated `backend/app/core/config.py`
-- Added Railway domains to CORS
-- Better production compatibility
+### Step 6: Update Frontend URL
+1. Get backend Railway URL (e.g., `backend-production.up.railway.app`)
+2. Frontend will automatically connect via API_BASE_URL logic
 
-## Deployment Steps
+### Step 7: Test Deployment
+1. Visit your frontend Railway URL
+2. Test all features:
+   - Dashboard loads
+   - CSV import works
+   - AI assistant responds
+   - Insights show Gemini branding
 
-### 1. Authenticate with Railway
-```bash
-railway login
+## 🔧 Configuration Files Created
+
+### Backend: `/backend/railway.toml`
+```toml
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "gunicorn app.main:app -w 1 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[env]
+MONGODB_URL = "${{MONGO_URL}}"
+REDIS_URL = "${{REDIS_URL}}"
+SECRET_KEY = "${{SECRET_KEY}}"
+GEMINI_API_KEY = "${{GEMINI_API_KEY}}"
 ```
 
-### 2. Link Your Project
-```bash
-railway link
+### Frontend: `/frontend/railway.toml`
+```toml
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "npx serve -s . -l 3000"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
 ```
 
-### 3. Add Required Services
-```bash
-railway add mongodb
-railway add redis
-```
+## 🌐 URLs After Deployment
+- Frontend: `https://your-app-name.up.railway.app`
+- Backend: `https://your-backend-name.up.railway.app`
+- MongoDB: Railway internal connection
+- Redis: Railway internal connection
 
-### 4. Set Environment Variables
-In your Railway dashboard, set these variables:
+## ✅ Success Indicators
+- Frontend loads and shows dashboard
+- API calls work (check browser console)
+- AI assistant responds with demo data
+- CSV import functions correctly
+- No CORS errors in console
 
-```
-SECRET_KEY=ckirPDRRA1ailSX7WBMbBKFv1Ms0YdSfhUj0IsMmIKw
-MONGODB_URL=mongodb://mongo:mongo@mongo.railway.internal:27017/cashflow?authSource=admin
-REDIS_URL=redis://redis.railway.internal:6379
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-MICROSOFT_CLIENT_ID=your-microsoft-client-id
-MICROSOFT_CLIENT_SECRET=your-microsoft-client-secret
-GROQ_API_KEY=your-groq-api-key
-```
-
-### 5. Deploy
-```bash
-railway up
-```
-
-## What Was Fixed
-
-### Database Connections
-- MongoDB: Uses Railway's internal MongoDB service
-- Redis: Uses Railway's internal Redis service
-- URLs updated to Railway's internal network
-
-### CORS Issues
-- Added `*.railway.app` and `*.up.railway.app` to allowed origins
-- Frontend can now communicate with backend
-
-### Build Process
-- Custom Dockerfile for better control
-- Health checks for monitoring
-- Optimized for Railway's infrastructure
-
-### Environment Variables
-- All required variables properly configured
-- Railway-specific variable references
-- Generated secure secret key
-
-## Troubleshooting
-
-### If deployment still fails:
-1. Check Railway logs: `railway logs`
-2. Verify services are running: `railway status`
-3. Check environment variables in Railway dashboard
-4. Ensure MongoDB and Redis services are added
-
-### Common Issues:
-- **Database connection errors**: Make sure MongoDB and Redis services are added
-- **CORS errors**: Verify Railway domains are in CORS configuration
-- **Build failures**: Check Dockerfile and requirements files
-
-## Next Steps
-
-After successful deployment:
-1. Test your application at the Railway URL
-2. Set up custom domain if needed
-3. Configure monitoring and alerts
-4. Set up automated deployments from GitHub
-
-Your CashFlow AI application should now deploy successfully on Railway!
+## 🚨 Troubleshooting
+- If frontend can't reach backend: Check CORS settings
+- If AI doesn't work: Verify GEMINI_API_KEY is set
+- If database errors: Check MongoDB/Redis addon connections
+- Check Railway logs for detailed error messages

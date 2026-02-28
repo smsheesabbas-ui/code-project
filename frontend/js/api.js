@@ -3,7 +3,9 @@
 // Connects frontend to FastAPI backend
 // ========================================
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:8000/api/v1'
+    : `${window.location.protocol}//${window.location.hostname.replace('3000', '8000')}/api/v1`;
 
 // ========================================
 // AUTHENTICATION API

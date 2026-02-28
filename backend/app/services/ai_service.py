@@ -8,12 +8,12 @@ class AIService:
     """AI service for entity extraction and classification using Google Gemini API"""
     
     def __init__(self):
-        if not settings.GROQ_API_KEY:
-            print("Warning: GROQ_API_KEY not set. AI features will be disabled.")
+        if not settings.GEMINI_API_KEY:
+            print("Warning: GEMINI_API_KEY not set. AI features will be disabled.")
             self.client = None
         else:
             # Configure Gemini with the API key
-            genai.configure(api_key=settings.GROQ_API_KEY)
+            genai.configure(api_key=settings.GEMINI_API_KEY)
             
             # List available models to debug
             try:

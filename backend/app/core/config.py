@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     MICROSOFT_CLIENT_SECRET: Optional[str] = None
     
     # AI Services
-    GROQ_API_KEY: Optional[str] = None
+    GEMINI_API_KEY: Optional[str] = None
     
     # File Upload
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
