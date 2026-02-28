@@ -1,18 +1,20 @@
 import os
-import groq
+import google.generativeai as genai
 from typing import Dict, List, Optional, Tuple
 from app.core.config import settings
 
 
 class AIService:
-    """AI service for entity extraction and classification using Groq API"""
+    """AI service for entity extraction and classification using Google Gemini API"""
     
     def __init__(self):
         if not settings.GROQ_API_KEY:
             print("Warning: GROQ_API_KEY not set. AI features will be disabled.")
             self.client = None
         else:
-            self.client = groq.Groq(api_key=settings.GROQ_API_KEY)
+            # Configure Gemini with the API key
+            genai.configure(api_key=settings.GROQ_API_KEY)
+            self.client = genai.GenerativeModel('gemini-1.5-flash')
     
     async def extract_entity(self, description: str) -> Optional[str]:
         """Extract entity name from transaction description"""
@@ -20,24 +22,16 @@ class AIService:
             return None
             
         try:
-            response = self.client.chat.completions.create(
-                model="llama3-8b-8192",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "Extract the company or entity name from the transaction description. Return ONLY the entity name, nothing else. Remove common words like 'PAYMENT', 'INVOICE', 'TRANSACTION', 'FEE', etc."
-                    },
-                    {
-                        "role": "user", 
-                        "content": description
-                    }
-                ],
-                max_tokens=50,
-                temperature=0.1
-            )
+            prompt = f"""
+            Extract the company or entity name from this transaction description: "{description}"
             
-            entity_name = response.choices[0].message.content.strip()
-            return entity_name if entity_name else None
+            Return ONLY the entity name, nothing else. Remove common words like 'PAYMENT', 'INVOICE', 'TRANSACTION', 'FEE', etc.
+            """
+            
+            response = self.client.generate_content(prompt)
+            entity = response.text.strip()
+            
+            return entity if entity else None
             
         except Exception as e:
             print(f"Error extracting entity: {e}")
@@ -49,76 +43,64 @@ class AIService:
             return None
             
         try:
-            # Determine transaction type based on amount
-            transaction_type = "revenue" if amount >= 0 else "expense"
+            categories = [
+                "Software & Subscriptions", "Office Expenses", "Marketing", 
+                "Professional Services", "Travel & Transport", "Meals & Entertainment",
+                "Rent/Utilities", "Equipment", "Taxes", "Other"
+            ]
             
-            response = self.client.chat.completions.create(
-                model="llama3-8b-8192",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": f"""Classify this {transaction_type} transaction into one of these categories:
-                        
-                        For revenue: Software Sales, Consulting Services, Product Sales, Other Revenue, Interest Income, Refunds
-                        
-                        For expenses: Software & Subscriptions, Office Expenses, Marketing, Professional Services, Travel & Transport, Meals & Entertainment, Rent/Utilities, Equipment, Taxes, Bank Fees, Other Expenses
-                        
-                        Return ONLY the category name, nothing else."""
-                    },
-                    {
-                        "role": "user",
-                        "content": f"Description: {description}\nAmount: ${abs(amount)}"
-                    }
-                ],
-                max_tokens=30,
-                temperature=0.1
-            )
+            prompt = f"""
+            Classify this transaction into one of these categories: {', '.join(categories)}
             
-            category = response.choices[0].message.content.strip()
-            return category if category else None
+            Description: "{description}"
+            Amount: ${amount}
+            
+            Return ONLY the category name, nothing else.
+            """
+            
+            response = self.client.generate_content(prompt)
+            category = response.text.strip()
+            
+            # Validate category
+            if category in categories:
+                return category
+            else:
+                return "Other"
             
         except Exception as e:
             print(f"Error classifying category: {e}")
             return None
     
-    async def generate_weekly_summary(self, user_data: Dict) -> Optional[str]:
+    async def generate_weekly_summary(self, weekly_data: dict) -> Optional[str]:
         """Generate AI-powered weekly financial summary"""
         if not self.client:
             return None
             
         try:
-            prompt = f"""Generate a concise weekly financial summary based on this data:
+            # Prepare data for AI
+            total_revenue = weekly_data.get("total_revenue", 0)
+            total_expenses = weekly_data.get("total_expenses", 0)
+            net_cashflow = total_revenue - total_expenses
+            transaction_count = weekly_data.get("transaction_count", 0)
+            top_customer = weekly_data.get("top_customer", "N/A")
             
-            Total Revenue: ${user_data.get('total_revenue', 0):.2f}
-            Total Expenses: ${user_data.get('total_expenses', 0):.2f}
-            Net Income: ${user_data.get('net_income', 0):.2f}
-            Transaction Count: {user_data.get('transaction_count', 0)}
-            Top Customer: {user_data.get('top_customer', 'N/A')}
-            Top Expense Category: {user_data.get('top_expense_category', 'N/A')}
+            prompt = f"""
+            Based on the following weekly financial data, provide a concise 2-3 sentence summary:
             
-            Write a 2-3 sentence summary that is helpful and actionable. Focus on key insights and trends."""
+            - Total Revenue: ${total_revenue:,.2f}
+            - Total Expenses: ${total_expenses:,.2f}
+            - Net Cash Flow: ${net_cashflow:,.2f}
+            - Transaction Count: {transaction_count}
+            - Top Customer: {top_customer}
             
-            response = self.client.chat.completions.create(
-                model="llama3-8b-8192",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a helpful financial assistant. Write concise, actionable financial summaries."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                max_tokens=150,
-                temperature=0.7
-            )
+            Focus on cash flow health, revenue trends, and key insights. Be professional and actionable.
+            """
             
-            summary = response.choices[0].message.content.strip()
-            return summary
+            response = self.client.generate_content(prompt)
+            return response.text.strip()
             
         except Exception as e:
-            print(f"Error generating summary: {e}")
+            print(f"Error generating AI summary: {e}")
             return None
     
     async def generate_recommendations(self, user_data: Dict) -> Optional[List[str]]:
@@ -131,43 +113,22 @@ class AIService:
             
             Total Revenue: ${user_data.get('total_revenue', 0):.2f}
             Total Expenses: ${user_data.get('total_expenses', 0):.2f}
-            Net Income: ${user_data.get('net_income', 0):.2f}
-            Top Expense: {user_data.get('top_expense_category', 'N/A')} (${user_data.get('top_expense_amount', 0):.2f})
-            Customer Concentration: {user_data.get('customer_concentration', 0):.1f}
+            Net Cash Flow: ${user_data.get('net_cashflow', 0):.2f}
             
-            Return recommendations as a numbered list (1., 2., 3.). Focus on improving cash flow, reducing costs, or managing risks."""
+            Return each recommendation on a new line, starting with a number (1., 2., 3.)
+            """
             
-            response = self.client.chat.completions.create(
-                model="llama3-8b-8192",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a financial advisor. Provide specific, actionable recommendations based on financial data."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                max_tokens=200,
-                temperature=0.7
-            )
-            
-            recommendations_text = response.choices[0].message.content.strip()
+            response = self.client.generate_content(prompt)
+            text = response.text.strip()
             
             # Parse numbered list
             recommendations = []
-            for line in recommendations_text.split('\n'):
-                if line.strip() and (line.strip()[0].isdigit() or line.strip().startswith('-')):
-                    # Remove numbering and clean up
-                    clean_line = line.strip()
-                    if clean_line[0].isdigit():
-                        clean_line = '.'.join(clean_line.split('.')[1:]).strip()
-                    elif clean_line.startswith('-'):
-                        clean_line = clean_line[1:].strip()
-                    
-                    if clean_line:
-                        recommendations.append(clean_line)
+            for line in text.split('\n'):
+                clean_line = line.strip()
+                if clean_line and (clean_line[0].isdigit() or clean_line.startswith('-')):
+                    # Remove numbering/bullets
+                    clean_line = clean_line[2:] if clean_line[0].isdigit() else clean_line[1:]
+                    recommendations.append(clean_line.strip())
             
             return recommendations[:3]  # Return max 3 recommendations
             

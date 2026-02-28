@@ -44,10 +44,23 @@ async def get_weekly_summary():
         weekly_data = result[0] if result else {}
         
         # Generate AI summary
-        summary = await ai_service.generate_weekly_summary(weekly_data)
+        try:
+            summary = await ai_service.generate_weekly_summary(weekly_data)
+        except Exception as e:
+            print(f"AI Service Error: {e}")
+            summary = None
+        
+        # Check if we have a valid summary or if there's an API key issue
+        if not summary:
+            if ai_service.client:
+                # API key exists but failed (invalid key, network issues, etc.)
+                summary = "AI service temporarily unavailable. Please check API key configuration."
+            else:
+                # No API key configured
+                summary = "Demo mode: AI summary not available without GROQ_API_KEY"
         
         return {
-            "summary": summary or "Demo mode: AI summary not available without GROQ_API_KEY",
+            "summary": summary,
             "data": weekly_data,
             "period_start": week_ago.isoformat(),
             "period_end": datetime.utcnow().isoformat()

@@ -19,6 +19,7 @@ gunicorn==21.2.0
 
 # Iteration 2: AI and Background Processing
 groq==0.4.1
+google-generativeai==0.3.2
 celery==5.3.4
 prophet==1.1.5
 holidays==0.35

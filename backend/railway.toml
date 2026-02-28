@@ -8,7 +8,7 @@ restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
 [env]
-MONGODB_URL = "${{MONGODB_URL}}"
+MONGODB_URL = "${{MONGO_URL}}"
 REDIS_URL = "${{REDIS_URL}}"
 SECRET_KEY = "${{SECRET_KEY}}"
 GOOGLE_CLIENT_ID = "${{GOOGLE_CLIENT_ID}}"
@@ -16,11 +16,3 @@ GOOGLE_CLIENT_SECRET = "${{GOOGLE_CLIENT_SECRET}}"
 MICROSOFT_CLIENT_ID = "${{MICROSOFT_CLIENT_ID}}"
 MICROSOFT_CLIENT_SECRET = "${{MICROSOFT_CLIENT_SECRET}}"
 GROQ_API_KEY = "${{GROQ_API_KEY}}"
-
-[[services]]
-name = "mongodb"
-source = "railway/mongodb"
-
-[[services]]
-name = "redis"
-source = "railway/redis"
