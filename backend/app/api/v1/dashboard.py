@@ -49,65 +49,23 @@ async def get_dashboard_overview():
     
     # Recent transactions
     recent_transactions = sorted(transactions, key=lambda x: x["transaction_date"], reverse=True)[:5]
-    current_month_pipeline = [
-        {"$match": current_month_filter},
-        {"$group": {
-            "_id": None,
-            "total_revenue": {"$sum": {"$cond": [{"$gt": ["$amount", 0]}, "$amount", 0]}},
-            "total_expenses": {"$sum": {"$cond": [{"$lt": ["$amount", 0]}, {"$abs": "$amount"}, 0]}},
-            "net_income": {"$sum": "$amount"},
-            "last_balance": {"$last": "$balance"}
-        }}
-    ]
     
-    current_month_result = await db.transactions.aggregate(current_month_pipeline).to_list(length=1)
-    current_month_data = current_month_result[0] if current_month_result else {
-        "total_revenue": 0,
-        "total_expenses": 0,
-        "net_income": 0,
-        "last_balance": 0
+    return {
+        "total_income": total_income,
+        "total_expenses": total_expenses,
+        "net_balance": net_balance,
+        "transaction_count": len(transactions),
+        "recent_transactions": [
+            {
+                "id": str(tx["_id"]),
+                "date": tx["transaction_date"].strftime("%Y-%m-%d"),
+                "description": tx["description"],
+                "amount": tx["amount"],
+                "category": tx.get("category", "Uncategorized")
+            }
+            for tx in recent_transactions
+        ]
     }
-    
-    # Calculate last month metrics
-    last_month_pipeline = [
-        {"$match": last_month_filter},
-        {"$group": {
-            "_id": None,
-            "total_revenue": {"$sum": {"$cond": [{"$gt": ["$amount", 0]}, "$amount", 0]}},
-            "total_expenses": {"$sum": {"$cond": [{"$lt": ["$amount", 0]}, {"$abs": "$amount"}, 0]}},
-            "net_income": {"$sum": "$amount"}
-        }}
-    ]
-    
-    last_month_result = await db.transactions.aggregate(last_month_pipeline).to_list(length=1)
-    last_month_data = last_month_result[0] if last_month_result else {
-        "total_revenue": 0,
-        "total_expenses": 0,
-        "net_income": 0
-    }
-    
-    # Calculate percentage changes
-    revenue_change = calculate_percent_change(
-        last_month_data["total_revenue"],
-        current_month_data["total_revenue"]
-    )
-    
-    expense_change = calculate_percent_change(
-        last_month_data["total_expenses"],
-        current_month_data["total_expenses"]
-    )
-    
-    return OverviewResponse(
-        current_cash_balance=current_month_data["last_balance"] or 0,
-        total_revenue_this_month=current_month_data["total_revenue"],
-        total_expenses_this_month=current_month_data["total_expenses"],
-        net_income_this_month=current_month_data["net_income"],
-        total_revenue_last_month=last_month_data["total_revenue"],
-        total_expenses_last_month=last_month_data["total_expenses"],
-        net_income_last_month=last_month_data["net_income"],
-        revenue_change_percent=revenue_change,
-        expense_change_percent=expense_change
-    )
 
 
 @router.get("/top-customers", response_model=List[TopEntityResponse])

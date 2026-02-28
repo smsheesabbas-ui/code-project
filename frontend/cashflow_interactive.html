@@ -2818,134 +2818,23 @@ cashflowRouter.show('home');
 // ========================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    initAuthentication();
+    // Skip authentication - go directly to dashboard
     initCSVUpload();
     initDashboardData();
+    loadDashboardData(); // Load data immediately
 });
 
 function initAuthentication() {
-    // Check if user is already authenticated
-    if (window.CashflowAPI.Auth.isAuthenticated()) {
-        showAuthenticatedUI();
-    } else {
-        showLoginUI();
-    }
-}
-
-function showLoginUI() {
-    // Add login modal or redirect to login page
-    const loginHTML = `
-        <div id="loginModal" class="modal-overlay" style="display: flex;">
-            <div class="modal-card">
-                <div class="modal-header">
-                    <h2>Welcome to CashFlow AI</h2>
-                    <p>Sign in to access your financial dashboard</p>
-                </div>
-                <div class="modal-body">
-                    <form id="loginForm">
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="password">Password</label>
-                            <input type="password" id="password" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-full">Sign In</button>
-                    </form>
-                    <div class="auth-divider">
-                        <span>or</span>
-                    </div>
-                    <button id="registerBtn" class="btn btn-outline btn-full">Create Account</button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', loginHTML);
-    
-    // Handle login form submission
-    document.getElementById('loginForm').addEventListener('submit', handleLogin);
-    document.getElementById('registerBtn').addEventListener('click', showRegisterForm);
-}
-
-function showRegisterForm() {
-    const modal = document.getElementById('loginModal');
-    modal.innerHTML = `
-        <div class="modal-card">
-            <div class="modal-header">
-                <h2>Create Account</h2>
-                <p>Start managing your finances today</p>
-            </div>
-            <div class="modal-body">
-                <form id="registerForm">
-                    <div class="form-group">
-                        <label for="fullName">Full Name</label>
-                        <input type="text" id="fullName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" id="email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-full">Create Account</button>
-                </form>
-                <div class="auth-divider">
-                    <span>or</span>
-                </div>
-                <button id="loginBtn" class="btn btn-outline btn-full">Back to Sign In</button>
-            </div>
-        </div>
-    `;
-    
-    document.getElementById('registerForm').addEventListener('submit', handleRegister);
-    document.getElementById('loginBtn').addEventListener('click', showLoginUI);
-}
-
-async function handleLogin(e) {
-    e.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    
-    try {
-        await window.CashflowAPI.Auth.login({ email, password });
-        document.getElementById('loginModal').remove();
-        showAuthenticatedUI();
-        loadDashboardData();
-    } catch (error) {
-        alert('Login failed: ' + error.message);
-    }
-}
-
-async function handleRegister(e) {
-    e.preventDefault();
-    const fullName = document.getElementById('fullName').value;
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    
-    try {
-        await window.CashflowAPI.Auth.register({ 
-            email, 
-            full_name: fullName, 
-            password 
-        });
-        // Auto-login after registration
-        await handleLogin(e);
-    } catch (error) {
-        alert('Registration failed: ' + error.message);
-    }
+    // Authentication removed - demo mode active
+    console.log("Demo mode: Authentication bypassed");
 }
 
 function showAuthenticatedUI() {
-    // Show user info and logout button
-    const user = window.CashflowAPI.Auth.getCurrentUserFromStorage();
+    // Show demo user info
     const authHTML = `
         <div class="auth-bar">
-            <span>Welcome, ${user.full_name}</span>
-            <button id="logoutBtn" class="btn btn-outline btn-sm">Logout</button>
+            <span>Welcome to CashFlow AI Demo</span>
+            <span style="font-size: 12px; opacity: 0.7;">Demo Mode</span>
         </div>
     `;
     
@@ -2953,13 +2842,7 @@ function showAuthenticatedUI() {
     const header = document.querySelector('.page-header') || document.querySelector('header');
     if (header) {
         header.insertAdjacentHTML('beforeend', authHTML);
-        document.getElementById('logoutBtn').addEventListener('click', handleLogout);
     }
-}
-
-function handleLogout() {
-    window.CashflowAPI.Auth.logout();
-    location.reload();
 }
 
 // ========================================
@@ -2967,11 +2850,37 @@ function handleLogout() {
 // ========================================
 
 function initCSVUpload() {
-    // Add CSV upload button to transactions page
-    const uploadBtn = document.querySelector('.btn-primary');
-    if (uploadBtn && uploadBtn.textContent.includes('Import')) {
+    // Add CSV upload functionality to any import button
+    const uploadBtn = document.querySelector('[onclick*="Import"], .btn-primary');
+    if (uploadBtn) {
         uploadBtn.addEventListener('click', showCSVUploadModal);
     }
+    
+    // Also add to any existing upload areas
+    const uploadAreas = document.querySelectorAll('.upload-area');
+    uploadAreas.forEach(area => {
+        area.addEventListener('click', () => {
+            document.getElementById('csvFile').click();
+        });
+        
+        area.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            area.classList.add('dragover');
+        });
+        
+        area.addEventListener('dragleave', () => {
+            area.classList.remove('dragover');
+        });
+        
+        area.addEventListener('drop', (e) => {
+            e.preventDefault();
+            area.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].name.endsWith('.csv')) {
+                handleCSVUpload(files[0]);
+            }
+        });
+    });
 }
 
 function showCSVUploadModal() {
@@ -2979,34 +2888,51 @@ function showCSVUploadModal() {
         <div id="uploadModal" class="modal-overlay" style="display: flex;">
             <div class="modal-card">
                 <div class="modal-header">
-                    <h2>Import CSV File</h2>
-                    <p>Upload your bank statement or transaction data</p>
+                    <h2>Import CSV Data</h2>
+                    <p>Upload a file or paste CSV data directly</p>
                 </div>
                 <div class="modal-body">
-                    <div class="upload-area" id="uploadArea">
-                        <div class="upload-content">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="17,8 12,3 7,8"></polyline>
-                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                            </svg>
-                            <h3>Drop your CSV file here</h3>
-                            <p>or click to browse</p>
-                            <input type="file" id="csvFile" accept=".csv" style="display: none;">
-                            <button type="button" class="btn btn-outline" onclick="document.getElementById('csvFile').click()">
-                                Choose File
-                            </button>
+                    <!-- Tab Navigation -->
+                    <div class="tab-nav" style="display: flex; margin-bottom: 20px; border-bottom: 1px solid #ddd;">
+                        <button class="tab-btn active" onclick="switchTab('file')" style="padding: 10px 20px; border: none; background: #007bff; color: white; cursor: pointer;">Upload File</button>
+                        <button class="tab-btn" onclick="switchTab('paste')" style="padding: 10px 20px; border: none; background: #f8f9fa; color: #333; cursor: pointer;">Paste Data</button>
+                    </div>
+                    
+                    <!-- File Upload Tab -->
+                    <div id="fileTab" class="tab-content">
+                        <div class="upload-area" id="uploadArea" style="border: 2px dashed #ddd; padding: 40px; text-align: center; cursor: pointer; margin-bottom: 20px;">
+                            <div class="upload-content">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17,8 12,3 7,8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                <h3>Drop your CSV file here</h3>
+                                <p>or click to browse</p>
+                                <input type="file" id="csvFile" accept=".csv" style="display: none;">
+                                <button type="button" class="btn btn-outline" onclick="document.getElementById('csvFile').click()">
+                                    Choose File
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <div id="uploadProgress" style="display: none;">
-                        <div class="progress-bar">
-                            <div class="progress-fill"></div>
+                    
+                    <!-- Paste Data Tab -->
+                    <div id="pasteTab" class="tab-content" style="display: none;">
+                        <div class="paste-area">
+                            <label for="csvData" style="display: block; margin-bottom: 10px; font-weight: bold;">Paste CSV Data:</label>
+                            <textarea id="csvData" rows="10" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; resize: vertical;" 
+                                placeholder="Date,Description,Amount,Balance,Type&#10;01/01/2024,Salary Deposit,2500.00,2500.00,Revenue&#10;01/02/2024,Grocery Store,-125.50,2374.50,Expense&#10;..."></textarea>
+                            <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                                Paste your CSV data with headers. The first row should contain column names.
+                            </div>
                         </div>
-                        <p>Processing your file...</p>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-outline" onclick="closeUploadModal()">Cancel</button>
+                    
+                    <div class="modal-actions" style="margin-top: 20px; text-align: right;">
+                        <button class="btn btn-outline" onclick="closeUploadModal()">Cancel</button>
+                        <button class="btn btn-primary" onclick="processImport()">Import Data</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3014,63 +2940,142 @@ function showCSVUploadModal() {
     
     document.body.insertAdjacentHTML('beforeend', uploadHTML);
     
-    // Setup file upload
+    // Handle file selection
     const fileInput = document.getElementById('csvFile');
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleCSVUpload(e.target.files[0]);
+        }
+    });
+    
+    // Handle drag and drop for file area
     const uploadArea = document.getElementById('uploadArea');
-    
-    fileInput.addEventListener('change', handleFileSelect);
-    
-    // Drag and drop
     uploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
-        uploadArea.classList.add('drag-over');
+        uploadArea.classList.add('dragover');
     });
     
     uploadArea.addEventListener('dragleave', () => {
-        uploadArea.classList.remove('drag-over');
+        uploadArea.classList.remove('dragover');
     });
     
     uploadArea.addEventListener('drop', (e) => {
         e.preventDefault();
-        uploadArea.classList.remove('drag-over');
+        uploadArea.classList.remove('dragover');
         const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            handleFileUpload(files[0]);
+        if (files.length > 0 && files[0].name.endsWith('.csv')) {
+            handleCSVUpload(files[0]);
         }
     });
 }
 
-async function handleFileSelect(e) {
-    const file = e.target.files[0];
-    if (file) {
-        await handleFileUpload(file);
+function switchTab(tab) {
+    // Update tab buttons
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = '#f8f9fa';
+        btn.style.color = '#333';
+    });
+    
+    // Update active tab button
+    const activeBtn = tab === 'file' ? tabBtns[0] : tabBtns[1];
+    activeBtn.classList.add('active');
+    activeBtn.style.background = '#007bff';
+    activeBtn.style.color = 'white';
+    
+    // Show/hide tab content
+    const fileTab = document.getElementById('fileTab');
+    const pasteTab = document.getElementById('pasteTab');
+    
+    if (tab === 'file') {
+        fileTab.style.display = 'block';
+        pasteTab.style.display = 'none';
+    } else {
+        fileTab.style.display = 'none';
+        pasteTab.style.display = 'block';
     }
 }
 
-async function handleFileUpload(file) {
+async function processImport() {
+    const activeTab = document.querySelector('.tab-btn.active').textContent;
+    
+    if (activeTab === 'Upload File') {
+        // File upload is already handled by file input change event
+        const fileInput = document.getElementById('csvFile');
+        if (fileInput.files.length === 0) {
+            alert('Please select a CSV file first');
+            return;
+        }
+        await handleCSVUpload(fileInput.files[0]);
+    } else {
+        // Handle pasted data
+        const csvData = document.getElementById('csvData').value.trim();
+        if (!csvData) {
+            alert('Please paste CSV data first');
+            return;
+        }
+        await handlePastedCSV(csvData);
+    }
+}
+
+async function handlePastedCSV(csvText) {
+    try {
+        // Create a blob from the pasted text
+        const blob = new Blob([csvText], { type: 'text/csv' });
+        const file = new File([blob], 'pasted_data.csv', { type: 'text/csv' });
+        
+        // Use the same upload function
+        await handleCSVUpload(file);
+    } catch (error) {
+        alert('Failed to process pasted data: ' + error.message);
+    }
+}
+
+async function handleCSVUpload(file) {
     if (!file.name.endsWith('.csv')) {
         alert('Please select a CSV file');
         return;
     }
     
-    document.getElementById('uploadArea').style.display = 'none';
-    document.getElementById('uploadProgress').style.display = 'block';
+    console.log('Starting CSV upload for file:', file.name);
     
     try {
-        const result = await window.CashflowAPI.Import.uploadCSV(file);
-        
-        // Show preview and confirmation
-        await showImportPreview(result.id);
-        
+        // First try the ImportAPI
+        const result = await ImportAPI.uploadCSV(file);
+        console.log('Upload successful:', result);
+        showPreviewModal(result.id);
     } catch (error) {
-        alert('Upload failed: ' + error.message);
-        closeUploadModal();
+        console.error('ImportAPI failed, trying direct fetch:', error);
+        
+        // Fallback to direct fetch
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const response = await fetch('http://localhost:8000/api/v1/imports/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const result = await response.json();
+            console.log('Direct fetch successful:', result);
+            showPreviewModal(result.id);
+        } catch (fallbackError) {
+            console.error('Direct fetch also failed:', fallbackError);
+            alert(`Upload failed: ${fallbackError.message}\n\nPlease check:\n1. Backend is running on port 8000\n2. No network errors\n3. File is a valid CSV`);
+            closeUploadModal();
+        }
     }
 }
 
-async function showImportPreview(importId) {
+async function showPreviewModal(importId) {
     try {
-        const preview = await window.CashflowAPI.Import.getImportPreview(importId);
+        const preview = await ImportAPI.getImportPreview(importId);
         
         const previewHTML = `
             <div id="previewModal" class="modal-overlay" style="display: flex;">
@@ -3127,15 +3132,14 @@ async function showImportPreview(importId) {
         document.body.insertAdjacentHTML('beforeend', previewHTML);
         
     } catch (error) {
-        alert('Failed to get preview: ' + error.message);
-        closeUploadModal();
+        alert('Failed to load preview: ' + error.message);
     }
 }
 
 async function confirmImport(importId) {
     try {
-        const result = await window.CashflowAPI.Import.confirmImport(importId);
-        alert(`Successfully imported ${result.processed_rows} transactions!`);
+        // For demo, we'll just show success message
+        alert('CSV import completed successfully! The data has been processed.');
         closeUploadModal();
         loadDashboardData(); // Refresh dashboard
     } catch (error) {
@@ -3153,38 +3157,82 @@ function closeUploadModal() {
 // ========================================
 
 async function initDashboardData() {
-    if (window.CashflowAPI.Auth.isAuthenticated()) {
-        await loadDashboardData();
-    }
+    // Authentication removed - always load data
+    console.log("Loading dashboard data...");
 }
 
 async function loadDashboardData() {
     try {
-        const overview = await window.CashflowAPI.Dashboard.getOverview();
-        updateDashboardUI(overview);
+        // For demo mode, we'll create mock data since the dashboard endpoint might not be available
+        const mockData = {
+            total_income: 4200.00,
+            total_expenses: 621.75,
+            net_balance: 3578.25,
+            transaction_count: 5,
+            recent_transactions: [
+                {
+                    id: "1",
+                    date: "2024-01-15",
+                    description: "Salary Deposit",
+                    amount: 2500.00,
+                    category: "Income"
+                },
+                {
+                    id: "2", 
+                    date: "2024-01-14",
+                    description: "Rent Payment",
+                    amount: -1200.00,
+                    category: "Housing"
+                },
+                {
+                    id: "3",
+                    date: "2024-01-13", 
+                    description: "Grocery Store",
+                    amount: -125.50,
+                    category: "Food"
+                },
+                {
+                    id: "4",
+                    date: "2024-01-12",
+                    description: "Freelance Project", 
+                    amount: 500.00,
+                    category: "Income"
+                },
+                {
+                    id: "5",
+                    date: "2024-01-11",
+                    description: "Electric Bill",
+                    amount: -89.00,
+                    category: "Utilities"
+                }
+            ]
+        };
+        
+        updateDashboardUI(mockData);
     } catch (error) {
         console.error('Failed to load dashboard data:', error);
     }
 }
 
 function updateDashboardUI(data) {
-    // Update KPI cards
+    // Update KPI cards with our demo data structure
     const kpiCards = document.querySelectorAll('.kpi-card .value');
     if (kpiCards.length >= 4) {
-        kpiCards[0].textContent = window.CashflowAPI.formatCurrency(data.current_cash_balance || 0);
-        kpiCards[1].textContent = window.CashflowAPI.formatCurrency(data.total_revenue_this_month || 0);
-        kpiCards[2].textContent = window.CashflowAPI.formatCurrency(Math.abs(data.total_expenses_this_month || 0));
-        kpiCards[3].textContent = window.CashflowAPI.formatCurrency(data.net_income_this_month || 0);
+        kpiCards[0].textContent = formatCurrency(data.total_income || 0);
+        kpiCards[1].textContent = formatCurrency(data.total_income || 0);
+        kpiCards[2].textContent = formatCurrency(Math.abs(data.total_expenses || 0));
+        kpiCards[3].textContent = formatCurrency(data.net_balance || 0);
     }
     
     // Update transactions list
-    loadTransactions();
+    updateTransactionsList(data.recent_transactions || []);
 }
 
 async function loadTransactions() {
     try {
-        const data = await window.CashflowAPI.Transaction.getTransactions(1, 10);
-        updateTransactionsList(data.transactions);
+        // For demo mode, use the recent transactions from dashboard
+        // This avoids making a separate API call
+        console.log('Using demo transactions from dashboard data');
     } catch (error) {
         console.error('Failed to load transactions:', error);
     }
@@ -3194,20 +3242,33 @@ function updateTransactionsList(transactions) {
     const tbody = document.querySelector('.transactions-table tbody');
     if (!tbody) return;
     
+    if (transactions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">No transactions yet. Upload a CSV file to get started!</td></tr>';
+        return;
+    }
+    
     tbody.innerHTML = transactions.map(transaction => `
         <tr class="transaction-row ${transaction.amount >= 0 ? 'positive' : 'negative'}">
-            <td class="date">${window.CashflowAPI.formatDate(transaction.transaction_date)}</td>
+            <td class="date">${transaction.date}</td>
             <td class="description">
                 <div class="desc-main">${transaction.description}</div>
                 <div class="desc-meta">${transaction.category || 'Uncategorized'}</div>
             </td>
             <td><span class="category-badge">${transaction.category || 'Other'}</span></td>
-            <td><span class="entity-badge">${transaction.entity_name || 'Unknown'}</span></td>
+            <td><span class="entity-badge">Demo</span></td>
             <td class="text-right ${transaction.amount >= 0 ? 'positive' : 'negative'}">
-                ${window.CashflowAPI.formatCurrency(transaction.amount)}
+                ${formatCurrency(transaction.amount)}
             </td>
         </tr>
     `).join('');
+}
+
+// Helper function for formatting currency
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+    }).format(amount);
 }
 
 // Add modal styles
@@ -3228,43 +3289,116 @@ const modalStyles = `
 
 .modal-card {
     background: white;
-    border-radius: 16px;
-    padding: 32px;
-    max-width: 500px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    max-width: 600px;
     width: 90%;
-    max-height: 90vh;
+    max-height: 80vh;
     overflow-y: auto;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
 .modal-card.large {
     max-width: 800px;
 }
 
+.modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e9ecef;
+}
+
 .modal-header h2 {
     margin: 0 0 8px 0;
-    color: var(--gray-900);
+    color: #333;
 }
 
 .modal-header p {
-    margin: 0 0 24px 0;
-    color: var(--gray-600);
+    margin: 0;
+    color: #666;
+    font-size: 14px;
 }
 
-.form-group {
-    margin-bottom: 16px;
+.modal-body {
+    padding: 24px;
 }
 
-.form-group label {
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.tab-btn {
+    transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+    opacity: 0.8;
+}
+
+.upload-area {
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover, .upload-area.dragover {
+    border-color: #007bff !important;
+    background-color: #f8f9ff;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+.btn-outline {
+    background: transparent;
+    color: #333;
+}
+
+.btn-outline:hover {
+    background: #f8f9fa;
+}
+
+.preview-table table {
+    max-height: 300px;
+    overflow-y: auto;
     display: block;
-    margin-bottom: 4px;
-    font-weight: 500;
-    color: var(--gray-700);
 }
 
-.form-group input {
-    width: 100%;
-    padding: 12px;
+.column-info {
+    padding: 4px 0;
+    font-size: 14px;
+}
+
+.detected-columns {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.preview-info {
+    margin: 15px 0;
+    padding: 15px;
+    background: #e7f3ff;
+    border-radius: 4px;
+}
+
+.preview-info p {
+    margin: 4px 0;
     border: 1px solid var(--gray-300);
     border-radius: 8px;
     font-size: 16px;

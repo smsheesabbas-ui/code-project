@@ -17,55 +17,101 @@ router = APIRouter(prefix="/imports", tags=["imports"])
 csv_processor = CSVProcessor()
 
 
-@router.post("/upload", response_model=CSVImportResponse)
-async def upload_csv(
-    file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user)
-):
-    """Upload CSV file for processing"""
-    
+@router.post("/upload")
+async def upload_csv_file(file: UploadFile = File(...)):
+    """Upload CSV file for processing - no auth required for demo"""
     # Validate file type
     if not file.filename.endswith('.csv'):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=400,
             detail="Only CSV files are supported"
         )
     
-    # Validate file size
-    if file.size > settings.MAX_FILE_SIZE:
+    # Validate file size (10MB limit)
+    if file.size and file.size > 10 * 1024 * 1024:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File too large. Maximum size is {settings.MAX_FILE_SIZE // (1024*1024)}MB"
+            status_code=400,
+            detail="File too large. Maximum size is 10MB"
         )
     
-    # Generate unique filename
-    file_id = str(uuid.uuid4())
-    filename = f"{file_id}_{file.filename}"
-    file_path = os.path.join(settings.UPLOAD_DIR, filename)
+    db = get_database()
     
-    # Save file
-    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-    with open(file_path, "wb") as buffer:
-        content = await file.read()
-        buffer.write(content)
+    # Use demo user data
+    demo_user_id = "69a235b64db7304c81b42977"
     
     # Create import record
-    csv_import = CSVImport(
-        user_id=current_user.id,
-        filename=file.filename,
-        file_path=file_path,
-        file_size=file.size,
-        status="pending"
-    )
+    import_record = {
+        "user_id": demo_user_id,
+        "filename": file.filename,
+        "status": "uploaded",
+        "file_size": file.size,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow()
+    }
     
-    db = get_database()
-    result = await db.csv_imports.insert_one(csv_import.dict(by_alias=True))
-    csv_import.id = result.inserted_id
+    result = await db.imports.insert_one(import_record)
+    import_id = str(result.inserted_id)
     
-    # Start processing
-    await process_csv_upload(str(csv_import.id))
-    
-    return CSVImportResponse(**csv_import.dict())
+    # Save file temporarily
+    file_path = f"/tmp/{import_id}.csv"
+    try:
+        with open(file_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+        
+        # Process the file immediately
+        try:
+            # Read CSV file
+            df = pd.read_csv(file_path)
+            total_rows = len(df)
+            
+            # Detect columns
+            detected_columns = csv_processor.detect_columns(df)
+            
+            # Generate preview data
+            preview_data = []
+            for _, row in df.head(10).iterrows():
+                preview_row = {}
+                for col in df.columns:
+                    preview_row[col] = str(row[col]) if pd.notna(row[col]) else ""
+                preview_data.append(preview_row)
+            
+            # Update import record with processed data
+            update_data = {
+                "status": "preview_ready",
+                "total_rows": total_rows,
+                "detected_columns": detected_columns,
+                "preview_data": preview_data,
+                "updated_at": datetime.utcnow()
+            }
+            
+            await db.imports.update_one(
+                {"_id": ObjectId(import_id)},
+                {"$set": update_data}
+            )
+            
+        except Exception as processing_error:
+            # Update status to failed
+            await db.imports.update_one(
+                {"_id": ObjectId(import_id)},
+                {"$set": {
+                    "status": "failed",
+                    "error_message": str(processing_error),
+                    "updated_at": datetime.utcnow()
+                }}
+            )
+        
+        return {
+            "id": import_id,
+            "filename": file.filename,
+            "status": "uploaded",
+            "file_size": file.size
+        }
+        
+    except Exception as e:
+        # Clean up on error
+        await db.imports.delete_one({"_id": result.inserted_id})
+        raise HTTPException(status_code=500, detail=f"Failed to process file: {str(e)}")
 
 
 async def process_csv_upload(import_id: str):
@@ -126,16 +172,16 @@ async def process_csv_upload(import_id: str):
 
 
 @router.get("/{import_id}/preview", response_model=CSVImportResponse)
-async def get_import_preview(
-    import_id: str,
-    current_user: User = Depends(get_current_user)
-):
-    """Get import preview and column mapping"""
+async def get_import_preview(import_id: str):
+    """Get import preview and column mapping - no auth required for demo"""
     db = get_database()
     
-    csv_import = await db.csv_imports.find_one({
+    # Use demo user data
+    demo_user_id = "69a235b64db7304c81b42977"
+    
+    csv_import = await db.imports.find_one({
         "_id": ObjectId(import_id),
-        "user_id": current_user.id
+        "user_id": demo_user_id
     })
     
     if not csv_import:
@@ -144,7 +190,25 @@ async def get_import_preview(
             detail="Import not found"
         )
     
-    return CSVImportResponse(**csv_import)
+    # Convert MongoDB document to response format
+    response_data = {
+        "id": str(csv_import["_id"]),
+        "user_id": str(csv_import["user_id"]),
+        "filename": csv_import["filename"],
+        "file_size": csv_import["file_size"],
+        "status": csv_import["status"],
+        "total_rows": csv_import.get("total_rows", 0),
+        "processed_rows": csv_import.get("processed_rows", 0),
+        "duplicate_rows": csv_import.get("duplicate_rows", 0),
+        "error_rows": csv_import.get("error_rows", 0),
+        "column_mapping": csv_import.get("column_mapping"),
+        "detected_columns": csv_import.get("detected_columns"),
+        "preview_data": csv_import.get("preview_data"),
+        "error_message": csv_import.get("error_message"),
+        "created_at": csv_import["created_at"]
+    }
+    
+    return CSVImportResponse(**response_data)
 
 
 @router.put("/{import_id}/column-mapping", response_model=CSVImportResponse)

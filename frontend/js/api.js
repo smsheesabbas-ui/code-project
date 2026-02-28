@@ -50,14 +50,7 @@ class AuthAPI {
     }
     
     static async getCurrentUser() {
-        const token = localStorage.getItem('cashflow_token');
-        if (!token) throw new Error('No token found');
-        
-        const response = await fetch(`${API_BASE_URL}/auth/me`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
+        const response = await fetch(`${API_BASE_URL}/auth/me`);
         
         if (!response.ok) {
             throw new Error('Failed to get user');
@@ -91,37 +84,35 @@ class AuthAPI {
 
 class ImportAPI {
     static async uploadCSV(file) {
-        const token = AuthAPI.getToken();
-        if (!token) throw new Error('Not authenticated');
-        
         const formData = new FormData();
         formData.append('file', file);
         
-        const response = await fetch(`${API_BASE_URL}/imports/upload`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: formData
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Upload failed');
+        try {
+            const response = await fetch(`${API_BASE_URL}/imports/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            console.log('Upload response status:', response.status);
+            console.log('Upload response headers:', response.headers);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Upload error response:', errorText);
+                throw new Error(errorText || 'Upload failed');
+            }
+            
+            const data = await response.json();
+            console.log('Upload success data:', data);
+            return data;
+        } catch (error) {
+            console.error('Upload fetch error:', error);
+            throw new Error(`Upload failed: ${error.message}`);
         }
-        
-        return response.json();
     }
     
     static async getImportPreview(importId) {
-        const token = AuthAPI.getToken();
-        if (!token) throw new Error('Not authenticated');
-        
-        const response = await fetch(`${API_BASE_URL}/imports/${importId}/preview`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
+        const response = await fetch(`${API_BASE_URL}/imports/${importId}/preview`);
         
         if (!response.ok) {
             const error = await response.json();
@@ -132,13 +123,9 @@ class ImportAPI {
     }
     
     static async updateColumnMapping(importId, mapping) {
-        const token = AuthAPI.getToken();
-        if (!token) throw new Error('Not authenticated');
-        
         const response = await fetch(`${API_BASE_URL}/imports/${importId}/column-mapping`, {
             method: 'PUT',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(mapping)
@@ -153,14 +140,8 @@ class ImportAPI {
     }
     
     static async confirmImport(importId) {
-        const token = AuthAPI.getToken();
-        if (!token) throw new Error('Not authenticated');
-        
         const response = await fetch(`${API_BASE_URL}/imports/${importId}/confirm`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            method: 'POST'
         });
         
         if (!response.ok) {
@@ -172,14 +153,7 @@ class ImportAPI {
     }
     
     static async listImports() {
-        const token = AuthAPI.getToken();
-        if (!token) throw new Error('Not authenticated');
-        
-        const response = await fetch(`${API_BASE_URL}/imports`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
+        const response = await fetch(`${API_BASE_URL}/imports`);
         
         if (!response.ok) {
             const error = await response.json();

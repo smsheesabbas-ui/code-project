@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple API Test</title>
+</head>
+<body>
+    <h1>Simple API Test</h1>
+    <button onclick="testAPI()">Test API Connection</button>
+    <div id="result"></div>
+    
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                // Test basic connection
+                const healthResponse = await fetch('http://localhost:8000/health');
+                const healthData = await healthResponse.json();
+                
+                resultDiv.innerHTML = `
+                    <h3>✅ Backend Connected!</h3>
+                    <p>Health: ${healthData.status}</p>
+                    <p>Service: ${healthData.service}</p>
+                    
+                    <button onclick="testUpload()">Test CSV Upload</button>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3>❌ Connection Failed!</h3>
+                    <p>Error: ${error.message}</p>
+                    <p>This usually means:</p>
+                    <ul>
+                        <li>Backend is not running on port 8000</li>
+                        <li>CORS is blocking the request</li>
+                        <li>Network connectivity issue</li>
+                    </ul>
+                `;
+            }
+        }
+        
+        async function testUpload() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing upload...';
+            
+            // Create a simple CSV file
+            const csvContent = 'Date,Description,Amount\n2024-01-01,Test,100.00';
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const file = new File([blob], 'test.csv', { type: 'text/csv' });
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/imports/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <h3>✅ Upload Test Successful!</h3>
+                    <p>ID: ${data.id}</p>
+                    <p>Filename: ${data.filename}</p>
+                    <p>Status: ${data.status}</p>
+                    <p>Size: ${data.file_size} bytes</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3>❌ Upload Test Failed!</h3>
+                    <p>Error: ${error.message}</p>
+                    <p>Check browser console for more details.</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

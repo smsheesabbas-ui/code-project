@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Direct Upload Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-area { border: 2px dashed #ccc; padding: 20px; margin: 10px 0; text-align: center; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .result { margin: 10px 0; padding: 10px; background: #f5f5f5; }
+        .error { background: #ffe6e6; }
+        .success { background: #e6ffe6; }
+    </style>
+</head>
+<body>
+    <h1>Direct CSV Upload Test</h1>
+    
+    <div class="test-area">
+        <h3>Test 1: File Upload</h3>
+        <input type="file" id="fileInput" accept=".csv">
+        <button onclick="testFileUpload()">Upload File</button>
+    </div>
+    
+    <div class="test-area">
+        <h3>Test 2: Paste Upload</h3>
+        <textarea id="pasteArea" rows="5" style="width: 100%; margin: 10px 0;" 
+            placeholder="Paste CSV data here..."></textarea>
+        <button onclick="testPasteUpload()">Upload Pasted Data</button>
+    </div>
+    
+    <div id="result" class="result"></div>
+
+    <script>
+        async function testFileUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const resultDiv = document.getElementById('result');
+            
+            if (fileInput.files.length === 0) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '❌ Please select a CSV file first';
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            resultDiv.innerHTML = `Uploading ${file.name}...`;
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch('http://localhost:8000/api/v1/imports/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    ✅ File Upload Successful!
+                    <br><strong>ID:</strong> ${data.id}
+                    <br><strong>Filename:</strong> ${data.filename}
+                    <br><strong>Status:</strong> ${data.status}
+                    <br><strong>Size:</strong> ${data.file_size} bytes
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ File Upload Failed: ${error.message}`;
+            }
+        }
+        
+        async function testPasteUpload() {
+            const pasteArea = document.getElementById('pasteArea');
+            const resultDiv = document.getElementById('result');
+            
+            const csvText = pasteArea.value.trim();
+            if (!csvText) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '❌ Please paste CSV data first';
+                return;
+            }
+            
+            resultDiv.innerHTML = 'Processing pasted data...';
+            
+            try {
+                // Create a blob from the pasted text
+                const blob = new Blob([csvText], { type: 'text/csv' });
+                const file = new File([blob], 'pasted_data.csv', { type: 'text/csv' });
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch('http://localhost:8000/api/v1/imports/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    ✅ Paste Upload Successful!
+                    <br><strong>ID:</strong> ${data.id}
+                    <br><strong>Status:</strong> ${data.status}
+                    <br><strong>Size:</strong> ${data.file_size} bytes
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Paste Upload Failed: ${error.message}`;
+            }
+        }
+        
+        // Add sample CSV data for testing
+        window.onload = function() {
+            document.getElementById('pasteArea').value = `Date,Description,Amount,Balance,Type
+01/01/2024,Salary Deposit,2500.00,2500.00,Revenue
+01/02/2024,Grocery Store,-125.50,2374.50,Expense
+01/03/2024,Gas Station,-45.00,2329.50,Expense`;
+        };
+    </script>
+</body>
+</html>

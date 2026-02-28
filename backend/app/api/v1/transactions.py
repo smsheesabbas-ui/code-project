@@ -18,7 +18,12 @@ class TransactionListResponse(BaseModel):
     per_page: int
 
 
-@router.get("/", response_model=TransactionListResponse)
+@router.get("/test")
+async def test_endpoint():
+    """Simple test endpoint"""
+    return {"message": "Transactions endpoint working"}
+
+@router.get("/")
 async def get_transactions(
     page: int = 1,
     per_page: int = 50,
@@ -63,36 +68,26 @@ async def get_transactions(
     
     transactions = []
     async for transaction_doc in cursor:
-        transactions.append(TransactionResponse(**transaction_doc))
+        # Create simple transaction dict
+        transaction_data = {
+            "id": str(transaction_doc["_id"]),
+            "date": transaction_doc["transaction_date"].strftime("%Y-%m-%d"),
+            "description": transaction_doc["description"],
+            "amount": transaction_doc["amount"],
+            "category": transaction_doc.get("category", "Uncategorized"),
+            "balance": transaction_doc.get("balance", 0)
+        }
+        transactions.append(transaction_data)
     
-    return TransactionListResponse(
-        transactions=transactions,
-        total=total,
-        page=page,
-        per_page=per_page
-    )
+    return {
+        "transactions": transactions,
+        "total": total,
+        "page": page,
+        "per_page": per_page
+    }
 
 
-@router.get("/{transaction_id}", response_model=TransactionResponse)
-async def get_transaction(
-    transaction_id: str,
-    current_user: User = Depends(get_current_user)
-):
-    """Get a specific transaction"""
-    db = get_database()
-    
-    transaction = await db.transactions.find_one({
-        "_id": ObjectId(transaction_id),
-        "user_id": current_user.id
-    })
-    
-    if not transaction:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Transaction not found"
-        )
-    
-    return TransactionResponse(**transaction)
+# Note: Individual transaction endpoint removed for demo mode
 
 
 @router.put("/{transaction_id}", response_model=TransactionResponse)
