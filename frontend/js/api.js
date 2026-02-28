@@ -352,6 +352,116 @@ class DashboardAPI {
 }
 
 // ========================================
+// INTELLIGENCE API
+// ========================================
+
+class IntelligenceAPI {
+    static async getWeeklySummary() {
+        const response = await fetch(`${API_BASE_URL}/intelligence/weekly-summary`);
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to get weekly summary');
+        }
+        
+        return response.json();
+    }
+    
+    static async getRecommendations() {
+        const response = await fetch(`${API_BASE_URL}/intelligence/recommendations`);
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to get recommendations');
+        }
+        
+        return response.json();
+    }
+    
+    static async getCashflowForecast(days = 30) {
+        const response = await fetch(`${API_BASE_URL}/intelligence/forecasts/cashflow?days=${days}`);
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to get forecast');
+        }
+        
+        return response.json();
+    }
+    
+    static async getAlerts(limit = 50) {
+        const response = await fetch(`${API_BASE_URL}/intelligence/alerts?limit=${limit}`);
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to get alerts');
+        }
+        
+        return response.json();
+    }
+    
+    static async checkAlerts() {
+        const response = await fetch(`${API_BASE_URL}/intelligence/alerts/check`, {
+            method: 'POST'
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to check alerts');
+        }
+        
+        return response.json();
+    }
+    
+    static async acknowledgeAlert(alertId) {
+        const response = await fetch(`${API_BASE_URL}/intelligence/alerts/${alertId}/acknowledge`, {
+            method: 'PUT'
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to acknowledge alert');
+        }
+        
+        return response.json();
+    }
+    
+    static async extractEntity(description) {
+        const response = await fetch(`${API_BASE_URL}/intelligence/extract-entity`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ description })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to extract entity');
+        }
+        
+        return response.json();
+    }
+    
+    static async classifyCategory(description, amount) {
+        const response = await fetch(`${API_BASE_URL}/intelligence/classify-category`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ description, amount })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to classify category');
+        }
+        
+        return response.json();
+    }
+}
+
+// ========================================
 // UTILITY FUNCTIONS
 // ========================================
 
@@ -395,6 +505,7 @@ window.CashflowAPI = {
     Import: ImportAPI,
     Transaction: TransactionAPI,
     Dashboard: DashboardAPI,
+    Intelligence: IntelligenceAPI,
     handleAPIError,
     formatCurrency,
     formatDate

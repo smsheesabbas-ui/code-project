@@ -1734,7 +1734,7 @@ body.homepage .hamburger-menu {
                     </defs>
                 </svg>
                 <span class="logo-text">Cashflow</span>
-            </a>
+            </button>
             <button class="sidebar-close" id="sidebarCloseBtn" aria-label="Close menu">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <path d="M18 6L6 18M6 6l12 12"/>
@@ -1752,14 +1752,14 @@ body.homepage .hamburger-menu {
                         <rect x="3" y="14" width="7" height="7" rx="1"/>
                     </svg>
                     <span class="nav-text">Dashboard</span>
-                </a>
+                </button>
                 <a href="transactions.html" class="nav-item">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="12" y1="2" x2="12" y2="22"/>
                         <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                     </svg>
                     <span class="nav-text">Transactions</span>
-                </a>
+                </button>
                 <a href="entities.html" class="nav-item">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -1768,31 +1768,31 @@ body.homepage .hamburger-menu {
                         <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                     </svg>
                     <span class="nav-text">Customers & Suppliers</span>
-                </a>
+                </button>
                 <a href="insights.html" class="nav-item">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                     </svg>
                     <span class="nav-text">Insights</span>
-                </a>
+                </button>
                 <a href="assistant.html" class="nav-item">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
                     <span class="nav-text">Assistant</span>
-                </a>
+                </button>
             </div>
 
             <div class="nav-section">
                 <span class="nav-section-title">Data</span>
-                <a href="import-step1.html" class="nav-item">
+                <button class="nav-item" onclick="showCSVUploadModal()" style="background: none; border: none; text-align: left; width: 100%; padding: 12px 16px; display: flex; align-items: center; gap: 12px; color: #6b7280; text-decoration: none; border-radius: 8px; transition: all 0.2s ease; cursor: pointer;">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="17 8 12 3 7 8"/>
                         <line x1="12" y1="3" x2="12" y2="15"/>
                     </svg>
                     <span class="nav-text">Import CSV</span>
-                </a>
+                </button>
             </div>
         </nav>
 
@@ -1834,17 +1834,17 @@ body.homepage .hamburger-menu {
             </p>
 
             <div class="hero-ctas">
-                <a href="import-step1.html" class="btn btn-primary btn-lg">
+                <button class="btn btn-primary btn-lg" onclick="showCSVUploadModal()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="17 8 12 3 7 8"/>
                         <line x1="12" y1="3" x2="12" y2="15"/>
                     </svg>
                     Upload Bank CSV
-                </a>
-                <a href="dashboard.html" class="btn btn-secondary btn-lg">
+                </button>
+                <button class="btn btn-secondary btn-lg" onclick="cashflowRouter.show('dashboard')">
                     View Demo Dashboard
-                </a>
+                </button>
             </div>
 
             <div class="hero-trust">
@@ -1967,9 +1967,9 @@ body.homepage .hamburger-menu {
         <section class="footer-cta">
             <h2>Ready to understand your business finances?</h2>
             <p>Upload your first CSV file and get insights in under 2 minutes.</p>
-            <a href="import-step1.html" class="btn btn-primary btn-lg">
+            <button class="btn btn-primary btn-lg" onclick="showCSVUploadModal()">
                 Get Started Now
-            </a>
+            </button>
         </section>
     </main>
 </div>
@@ -1994,7 +1994,7 @@ body.homepage .hamburger-menu {
                     </defs>
                 </svg>
                 <span class="logo-text">Cashflow</span>
-            </a>
+            </button>
         </div>
 
         <nav class="sidebar-nav">
@@ -2007,14 +2007,14 @@ body.homepage .hamburger-menu {
                         <rect x="3" y="14" width="7" height="7" rx="1"/>
                     </svg>
                     <span class="nav-text">Dashboard</span>
-                </a>
+                </button>
                 <a href="transactions.html" class="nav-item">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="12" y1="2" x2="12" y2="22"/>
                         <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                     </svg>
                     <span class="nav-text">Transactions</span>
-                </a>
+                </button>
                 <a href="entities.html" class="nav-item">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -2023,31 +2023,31 @@ body.homepage .hamburger-menu {
                         <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                     </svg>
                     <span class="nav-text">Customers & Suppliers</span>
-                </a>
+                </button>
                 <a href="insights.html" class="nav-item">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                     </svg>
                     <span class="nav-text">Insights</span>
-                </a>
+                </button>
                 <a href="assistant.html" class="nav-item">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
                     <span class="nav-text">Assistant</span>
-                </a>
+                </button>
             </div>
 
             <div class="nav-section">
                 <span class="nav-section-title">Data</span>
-                <a href="import-step1.html" class="nav-item">
+                <button class="nav-item" onclick="showCSVUploadModal()" style="background: none; border: none; text-align: left; width: 100%; padding: 12px 16px; display: flex; align-items: center; gap: 12px; color: #6b7280; text-decoration: none; border-radius: 8px; transition: all 0.2s ease; cursor: pointer;">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="17 8 12 3 7 8"/>
                         <line x1="12" y1="3" x2="12" y2="15"/>
                     </svg>
                     <span class="nav-text">Import CSV</span>
-                </a>
+                </button>
             </div>
         </nav>
 
@@ -2059,7 +2059,7 @@ body.homepage .hamburger-menu {
                     <polyline points="9 22 9 12 15 12 15 22"/>
                 </svg>
                 <span>Back to Home</span>
-            </a>
+            </button>
             <div class="user-profile">
                 <div class="user-avatar">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2194,7 +2194,7 @@ body.homepage .hamburger-menu {
                 <div class="card">
                     <div class="card-header">
                         <h3>Top Customers</h3>
-                        <a href="entities.html" class="card-link">View all →</a>
+                        <a href="entities.html" class="card-link">View all →</button>
                     </div>
                     <div class="list">
                         <div class="list-item">
@@ -2225,7 +2225,7 @@ body.homepage .hamburger-menu {
                 <div class="card">
                     <div class="card-header">
                         <h3>Top Suppliers</h3>
-                        <a href="entities.html" class="card-link">View all →</a>
+                        <a href="entities.html" class="card-link">View all →</button>
                     </div>
                     <div class="list">
                         <div class="list-item">
@@ -2256,7 +2256,7 @@ body.homepage .hamburger-menu {
                 <div class="card insights-card">
                     <div class="card-header">
                         <h3>Recent Insights</h3>
-                        <a href="insights.html" class="card-link">View all →</a>
+                        <a href="insights.html" class="card-link">View all →</button>
                     </div>
                     <div class="insight-list">
                         <div class="insight-item">
@@ -2308,7 +2308,7 @@ body.homepage .hamburger-menu {
                     </defs>
                 </svg>
                 <span class="logo-text">Cashflow</span>
-            </a>
+            </button>
         </div>
 
         <nav class="sidebar-nav">
@@ -2321,14 +2321,14 @@ body.homepage .hamburger-menu {
                         <rect x="3" y="14" width="7" height="7" rx="1"/>
                     </svg>
                     <span class="nav-text">Dashboard</span>
-                </a>
+                </button>
                 <a href="transactions.html" class="nav-item active">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="12" y1="2" x2="12" y2="22"/>
                         <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                     </svg>
                     <span class="nav-text">Transactions</span>
-                </a>
+                </button>
                 <a href="entities.html" class="nav-item">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -2337,31 +2337,31 @@ body.homepage .hamburger-menu {
                         <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                     </svg>
                     <span class="nav-text">Customers & Suppliers</span>
-                </a>
+                </button>
                 <a href="insights.html" class="nav-item">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                     </svg>
                     <span class="nav-text">Insights</span>
-                </a>
+                </button>
                 <a href="assistant.html" class="nav-item">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
                     <span class="nav-text">Assistant</span>
-                </a>
+                </button>
             </div>
 
             <div class="nav-section">
                 <span class="nav-section-title">Data</span>
-                <a href="import-step1.html" class="nav-item">
+                <button class="nav-item" onclick="showCSVUploadModal()" style="background: none; border: none; text-align: left; width: 100%; padding: 12px 16px; display: flex; align-items: center; gap: 12px; color: #6b7280; text-decoration: none; border-radius: 8px; transition: all 0.2s ease; cursor: pointer;">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="17 8 12 3 7 8"/>
                         <line x1="12" y1="3" x2="12" y2="15"/>
                     </svg>
                     <span class="nav-text">Import CSV</span>
-                </a>
+                </button>
             </div>
         </nav>
 
@@ -2373,7 +2373,7 @@ body.homepage .hamburger-menu {
                     <polyline points="9 22 9 12 15 12 15 22"/>
                 </svg>
                 <span>Back to Home</span>
-            </a>
+            </button>
             <div class="user-profile">
                 <div class="user-avatar">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2850,11 +2850,8 @@ function showAuthenticatedUI() {
 // ========================================
 
 function initCSVUpload() {
-    // Add CSV upload functionality to any import button
-    const uploadBtn = document.querySelector('[onclick*="Import"], .btn-primary');
-    if (uploadBtn) {
-        uploadBtn.addEventListener('click', showCSVUploadModal);
-    }
+    // Don't add automatic event listeners as they conflict with onclick handlers
+    // The upload functionality is handled by the onclick attributes on buttons
     
     // Also add to any existing upload areas
     const uploadAreas = document.querySelectorAll('.upload-area');

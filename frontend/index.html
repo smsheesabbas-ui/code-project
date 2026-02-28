@@ -87,14 +87,14 @@
 
             <div class="nav-section">
                 <span class="nav-section-title">Data</span>
-                <a href="import-step1.html" class="nav-item">
+                <button class="nav-item" onclick="showCSVUploadModal()" style="background: none; border: none; text-align: left; width: 100%; padding: 12px 16px; display: flex; align-items: center; gap: 12px; color: #6b7280; text-decoration: none; border-radius: 8px; transition: all 0.2s ease; cursor: pointer;">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="17 8 12 3 7 8"/>
                         <line x1="12" y1="3" x2="12" y2="15"/>
                     </svg>
                     <span class="nav-text">Import CSV</span>
-                </a>
+                </button>
             </div>
         </nav>
 
@@ -136,14 +136,14 @@
             </p>
 
             <div class="hero-ctas">
-                <a href="import-step1.html" class="btn btn-primary btn-lg">
+                <button class="btn btn-primary btn-lg" onclick="showCSVUploadModal()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="17 8 12 3 7 8"/>
                         <line x1="12" y1="3" x2="12" y2="15"/>
                     </svg>
                     Upload Bank CSV
-                </a>
+                </button>
                 <a href="dashboard.html" class="btn btn-secondary btn-lg">
                     View Demo Dashboard
                 </a>
@@ -269,12 +269,168 @@
         <section class="footer-cta">
             <h2>Ready to understand your business finances?</h2>
             <p>Upload your first CSV file and get insights in under 2 minutes.</p>
-            <a href="import-step1.html" class="btn btn-primary btn-lg">
+            <button class="btn btn-primary btn-lg" onclick="showCSVUploadModal()">
                 Get Started Now
-            </a>
+            </button>
         </section>
     </main>
 
     <script src="js/app.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        // Add upload functionality to index.html
+        function showCSVUploadModal() {
+            const uploadHTML = `
+                <div id="uploadModal" class="modal-overlay" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+                    <div class="modal-card" style="background: white; padding: 30px; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                        <div class="modal-header">
+                            <h2>Import CSV Data</h2>
+                            <p>Upload a file or paste CSV data directly</p>
+                        </div>
+                        <div class="modal-body">
+                            <!-- Tab Navigation -->
+                            <div class="tab-nav" style="display: flex; border-bottom: 1px solid #e5e7eb; margin-bottom: 20px;">
+                                <button class="tab-btn active" onclick="showTab('file')" style="padding: 12px 20px; background: none; border: none; cursor: pointer; border-bottom: 2px solid #f97316; color: #f97316;">File Upload</button>
+                                <button class="tab-btn" onclick="showTab('paste')" style="padding: 12px 20px; background: none; border: none; cursor: pointer;">Paste CSV Data</button>
+                            </div>
+                            
+                            <!-- File Upload Tab -->
+                            <div id="file-tab" class="tab-content">
+                                <div class="upload-area" style="border: 2px dashed #d1d5db; padding: 40px; text-align: center; border-radius: 8px; cursor: pointer;" onclick="document.getElementById('csvFile').click()">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 16px;">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                        <polyline points="17 8 12 3 7 8"/>
+                                        <line x1="12" y1="3" x2="12" y2="15"/>
+                                    </svg>
+                                    <p style="margin: 0; color: #6b7280;">Click to browse or drag and drop</p>
+                                    <p style="margin: 8px 0 0; font-size: 14px; color: #9ca3af;">CSV files only</p>
+                                </div>
+                                <input type="file" id="csvFile" accept=".csv" style="display: none;">
+                                <div id="fileInfo" style="margin-top: 16px; padding: 12px; background: #f9fafb; border-radius: 6px; display: none;">
+                                    <p style="margin: 0; font-weight: 500;">Selected file:</p>
+                                    <p id="fileName" style="margin: 4px 0 0; color: #6b7280;"></p>
+                                </div>
+                            </div>
+                            
+                            <!-- Paste Tab -->
+                            <div id="paste-tab" class="tab-content" style="display: none;">
+                                <textarea id="csvPaste" placeholder="Paste your CSV data here..." style="width: 100%; height: 200px; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; resize: vertical;"></textarea>
+                                <p style="margin: 8px 0; font-size: 14px; color: #6b7280;">Format: Date,Description,Amount,Category</p>
+                            </div>
+                            
+                            <div class="modal-actions" style="margin-top: 20px; text-align: right;">
+                                <button class="btn btn-outline" onclick="closeUploadModal()" style="padding: 10px 20px; border: 1px solid #d1d5db; background: white; border-radius: 6px; margin-right: 10px; cursor: pointer;">Cancel</button>
+                                <button class="btn btn-primary" onclick="processImport()" style="padding: 10px 20px; background: #f97316; color: white; border: none; border-radius: 6px; cursor: pointer;">Import Data</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', uploadHTML);
+        }
+        
+        function showTab(tabName) {
+            // Hide all tabs
+            document.getElementById('file-tab').style.display = 'none';
+            document.getElementById('paste-tab').style.display = 'none';
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.style.borderBottom = 'none';
+                btn.style.color = '#6b7280';
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').style.display = 'block';
+            
+            // Add active class to clicked button
+            event.target.style.borderBottom = '2px solid #f97316';
+            event.target.style.color = '#f97316';
+        }
+        
+        function closeUploadModal() {
+            const modal = document.getElementById('uploadModal');
+            if (modal) modal.remove();
+        }
+        
+        function processImport() {
+            const fileTab = document.getElementById('file-tab');
+            const pasteTab = document.getElementById('paste-tab');
+            
+            if (fileTab.style.display !== 'none') {
+                // File upload
+                const fileInput = document.getElementById('csvFile');
+                const file = fileInput.files[0];
+                
+                if (!file) {
+                    alert('Please select a CSV file');
+                    return;
+                }
+                
+                uploadFile(file);
+            } else {
+                // Paste data
+                const csvData = document.getElementById('csvPaste').value.trim();
+                
+                if (!csvData) {
+                    alert('Please paste CSV data');
+                    return;
+                }
+                
+                uploadPastedData(csvData);
+            }
+        }
+        
+        async function uploadFile(file) {
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch('http://localhost:8000/api/v1/imports/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Upload failed: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                alert('File uploaded successfully! ID: ' + result.id);
+                closeUploadModal();
+                
+            } catch (error) {
+                alert('Upload failed: ' + error.message);
+            }
+        }
+        
+        async function uploadPastedData(csvData) {
+            try {
+                // Convert CSV data to blob
+                const blob = new Blob([csvData], { type: 'text/csv' });
+                const file = new File([blob], 'pasted_data.csv', { type: 'text/csv' });
+                
+                await uploadFile(file);
+                
+            } catch (error) {
+                alert('Upload failed: ' + error.message);
+            }
+        }
+        
+        // File input change handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('csvFile');
+            if (fileInput) {
+                fileInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        document.getElementById('fileInfo').style.display = 'block';
+                        document.getElementById('fileName').textContent = file.name;
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

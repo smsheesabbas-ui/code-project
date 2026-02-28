@@ -52,8 +52,14 @@ async def upload_csv_file(file: UploadFile = File(...)):
     result = await db.imports.insert_one(import_record)
     import_id = str(result.inserted_id)
     
-    # Save file temporarily
+    # Update record with file_path
     file_path = f"/tmp/{import_id}.csv"
+    await db.imports.update_one(
+        {"_id": ObjectId(import_id)},
+        {"$set": {"file_path": file_path}}
+    )
+    
+    # Save file temporarily
     try:
         with open(file_path, "wb") as buffer:
             content = await file.read()
@@ -119,14 +125,14 @@ async def process_csv_upload(import_id: str):
     db = get_database()
     
     # Update status to processing
-    await db.csv_imports.update_one(
+    await db.imports.update_one(
         {"_id": ObjectId(import_id)},
         {"$set": {"status": "processing", "updated_at": datetime.utcnow()}}
     )
     
     try:
         # Get import record
-        csv_import_doc = await db.csv_imports.find_one({"_id": ObjectId(import_id)})
+        csv_import_doc = await db.imports.find_one({"_id": ObjectId(import_id)})
         if not csv_import_doc:
             return
         
@@ -154,14 +160,14 @@ async def process_csv_upload(import_id: str):
             "updated_at": datetime.utcnow()
         }
         
-        await db.csv_imports.update_one(
+        await db.imports.update_one(
             {"_id": ObjectId(import_id)},
             {"$set": update_data}
         )
         
     except Exception as e:
         # Update status to failed
-        await db.csv_imports.update_one(
+        await db.imports.update_one(
             {"_id": ObjectId(import_id)},
             {"$set": {
                 "status": "failed",
@@ -232,7 +238,7 @@ async def update_column_mapping(
         )
     
     # Update column mapping
-    await db.csv_imports.update_one(
+    await db.imports.update_one(
         {"_id": ObjectId(import_id)},
         {"$set": {
             "column_mapping": column_mapping.dict(),
@@ -241,21 +247,21 @@ async def update_column_mapping(
     )
     
     # Get updated record
-    updated_import = await db.csv_imports.find_one({"_id": ObjectId(import_id)})
+    updated_import = await db.imports.find_one({"_id": ObjectId(import_id)})
     return CSVImportResponse(**updated_import)
 
 
-@router.post("/{import_id}/confirm", response_model=CSVImportResponse)
-async def confirm_import(
-    import_id: str,
-    current_user: User = Depends(get_current_user)
-):
-    """Confirm import and create transactions"""
+@router.post("/{import_id}/confirm")
+async def confirm_import(import_id: str):
+    """Confirm import and create transactions - Demo Mode"""
     db = get_database()
     
-    csv_import = await db.csv_imports.find_one({
+    # Demo mode - use hardcoded user ID
+    DEMO_USER_ID = "69a235b64db7304c81b42977"
+    
+    csv_import = await db.imports.find_one({
         "_id": ObjectId(import_id),
-        "user_id": current_user.id
+        "user_id": DEMO_USER_ID
     })
     
     if not csv_import:
@@ -289,13 +295,13 @@ async def confirm_import(
                     continue
                 
                 # Check for duplicates
-                if await is_duplicate_transaction(db, current_user.id, transaction_data):
+                if await is_duplicate_transaction(db, DEMO_USER_ID, transaction_data):
                     duplicate_rows += 1
                     continue
                 
                 # Create transaction
                 transaction = Transaction(
-                    user_id=current_user.id,
+                    user_id=DEMO_USER_ID,
                     import_id=ObjectId(import_id),
                     **transaction_data
                 )
@@ -308,10 +314,10 @@ async def confirm_import(
                 continue
         
         # Update import record
-        await db.csv_imports.update_one(
+        await db.imports.update_one(
             {"_id": ObjectId(import_id)},
             {"$set": {
-                "status": "confirmed",
+                "status": "completed",
                 "processed_rows": processed_rows,
                 "duplicate_rows": duplicate_rows,
                 "error_rows": error_rows,
@@ -320,12 +326,15 @@ async def confirm_import(
         )
         
         # Get updated record
-        updated_import = await db.csv_imports.find_one({"_id": ObjectId(import_id)})
-        return CSVImportResponse(**updated_import)
+        updated_import = await db.imports.find_one({"_id": ObjectId(import_id)})
+        # Convert ObjectId to string for JSON serialization
+        updated_import["id"] = str(updated_import["_id"])
+        del updated_import["_id"]
+        return updated_import
         
     except Exception as e:
         # Update status to failed
-        await db.csv_imports.update_one(
+        await db.imports.update_one(
             {"_id": ObjectId(import_id)},
             {"$set": {
                 "status": "failed",
