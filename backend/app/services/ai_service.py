@@ -14,7 +14,7 @@ class AIService:
         else:
             # Configure Gemini with the API key
             genai.configure(api_key=settings.GROQ_API_KEY)
-            self.client = genai.GenerativeModel('gemini-1.5-flash')
+            self.client = genai.GenerativeModel('gemini-1.0-pro')
     
     async def extract_entity(self, description: str) -> Optional[str]:
         """Extract entity name from transaction description"""

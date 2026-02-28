@@ -3,7 +3,7 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "uvicorn app.main:app --host 0.0.0.0 --port 8000"
+startCommand = "gunicorn app.main:app -w 1 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
@@ -16,3 +16,4 @@ GOOGLE_CLIENT_SECRET = "${{GOOGLE_CLIENT_SECRET}}"
 MICROSOFT_CLIENT_ID = "${{MICROSOFT_CLIENT_ID}}"
 MICROSOFT_CLIENT_SECRET = "${{MICROSOFT_CLIENT_SECRET}}"
 GROQ_API_KEY = "${{GROQ_API_KEY}}"
+RESEND_API_KEY = "${{RESEND_API_KEY}}"
